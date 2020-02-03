@@ -1,5 +1,6 @@
 #!/bin/bash
 casa=$HOME
+#add current position of the script in order to avoid misunderstanding for the followind IF statement
 if [[ $EUID -ne 0 ]];
 then
     exec sudo ./formatta_dischi_collegati.sh 
@@ -19,16 +20,18 @@ c=$(( columns / 2 ))
 r=$(( r < 20 ? 20 : r ))
 c=$(( c < 70 ? 70 : c ))
 
+
 declare -a partitions=()
 spengo=true
+nome_file="dejavu.img"
 version="0.0.2 1/2"
 titolo="Piallatore seriale"
 server="ftp://192.168.67.66/"
-percorso_server="$server~/dejavu.img"
-percorso_server_md5="$server~/dejavu.img.md5"
+percorso_server="$server~/$nome_file"
+percorso_server_md5="$server~/$nome_file.md5"
 cartella_di_lavoro="$casa/.iso_dejavu"
-percorso_locale="$cartella_di_lavoro/dejavu.img"
-percorso_locale_md5="$cartella_di_lavoro/dejavu.img.md5"
+percorso_locale="$cartella_di_lavoro/$nome_file"
+percorso_locale_md5="$cartella_di_lavoro/$nome_file.md5"
 percorso_locale_md5_scaricato="$cartella_di_lavoro/dejavu_nuovo.img.md5"
 user="server"
 passwd=""
@@ -111,13 +114,11 @@ function formatta ()
         #echo "sudo badblocks -fwsv /dev/$i >> log_$i" >> .tmp_"$i"
         #echo "dd if=/dev/zero of=/dev/$i status=progress" >> .tmp_"$i"
         #&& echo 'no error on /dev/$i at starting time $(date)'>> log_$i || echo 'error on /dev/$i at starting time $(date)'
-        echo "sleep 9" >> .tmp_"$i"
         echo "echo '1' >> .counter" >> .tmp_"$i"
         echo "rm .tmp_$i" >> .tmp_"$i"
         echo "exit 0" >> .tmp_"$i"
         chmod +x .tmp_"$i"
         sudo x-terminal-emulator -e "./.tmp_$i" &
-        sleep 2
         #sudo xfce4-terminal -e "./.tmp_$i" &
         #mate-terminal -e "./.tmp_$i" &
         #gnome-terminal --command "./.tmp_$i" &
@@ -131,10 +132,10 @@ function formatta ()
         do
           #echo $tipo
             (( indice += $contatore))
-            echo $(( $indice * 100 / $dischi_totali )) | dialog --title "$titolo" --gauge "Avanzamento formattazione..." $r $c 0
         done < ".counter" #per evitare delle subshell eseguite, mi legge il file fino alla fine
-    
-    done
+	echo $(( $indice * 100 / $dischi_totali )) | dialog --title "$titolo" --gauge "Avanzamento formattazione..." $r $c 0
+	done
+	clear
     
     
     for i in ${lista_dischi[@]};
@@ -226,7 +227,6 @@ function installa ()
         echo "Avvio il disco /dev/$i"
         echo "echo 'Avvio il disco /dev/$i'" >> .tmp_i_"$i"
         #echo "dd if=percorso_iso of=/dev/$i status=progress" >> .tmp_i_"$i"
-        echo "sleep 8" >> .tmp_i_"$i" #####
         echo "echo '1' >> .i_counter" >> .tmp_i_"$i"
         echo "rm .tmp_i_$i" >> .tmp_i_"$i"
         echo "exit 0" >> .tmp_"$i"
@@ -297,81 +297,33 @@ clear
 
 
 
-case "$#" in
-	1)	R=$1 ;;
-	*)	W=$(whiptail --title "Menù $titolo $version" --menu "Elenco delle funzionalità del Piallatore:" $r $c 6 \
-			"1" "Piallo i dischi, installo il sistema e me ne esco" \
-			"2" "Piallo i dischi" \
-			"3" "Installo il sistema"  3>&1 1>&2 2>&3)
-	 
-			exitstatus=$?
-			if [ $exitstatus = 0 ]; then
-				case "$W" in 
-					1)	spegnimento
-					    dipendenze
-					    get_disks 
-					    check_img_update &
-					    formatta
-					    get_disks 
-					    installa 
-					    spegni ;;
-					2)	spegnimento
-					    get_disks
-					    formatta
-					    spegni ;;
-					3)	spegnimento
-					    #dipendenze
-					    get_disks
-					    check_img_update
-					    installa
-					    spegni ;;
-					
-					*) exit 1 ;;
-				esac
-			else
-				clear 
-			fi ;;
+W=$(whiptail --title "Menù $titolo $version" --menu "Elenco delle funzionalità del Piallatore:" $r $c 6 \
+	"1" "Piallo i dischi, installo il sistema e me ne esco" \
+	"2" "Piallo i dischi" \
+	"3" "Installo il sistema"  3>&1 1>&2 2>&3)
 
+case "$W" in 
+	1)	spegnimento
+	    dipendenze
+		get_disks 
+		check_img_update &
+		formatta
+		get_disks 
+		installa 
+		spegni ;;
+	2)	spegnimento
+		get_disks
+		formatta
+		spegni ;;
+	3)	spegnimento
+		dipendenze
+		get_disks
+		check_img_update
+		installa
+		spegni ;;
+				
+	*) exit 1 ;;
 esac
-
-
-#case "$R" in
-#	1|complete|-c|--C)	    spegnimento
-#	                        dipendenze
-#	                        get_disks
-#	                        formatta
-#	                        installa ;;
-#	
-#	2|formatta|-f|--F)	    spegnimento
-#	                        get_disks
-#	                        formatta ;;
-#	
-#	3|installa|-i|--I)	    spegnimento
-#	                        dipendenze
-#	                        get_disks
-#	                        installa ;;
-#	4|Gutmann|-g|--G)	    spegnimento
-#	                        dipendenze
-#	                        get_disks
-#	                        formattag ;;
-#  	5|completeG|-cg|--CG)	spegnimento
-#  	                        dipendenze
-#  	                        get_disks
-#	                        formattag
-#	                        installa ;;
-#					
-#	-h|--help)		whiptail --title "Helpler del $titolo" --msgbox "Il programma $titolo ha 2 funzioni base: formattare i dischi e installare il sistema operativo. Se lanciato con un parametro si può bypassare l'interfaccia grafica. Usare:
-#
-#1 | complete  | -c  | --C  per eseguire tutti i passaggi
-#2 | formatta  | -f  | --F  per eseguire solo la formattazione
-#3 | installa  | -i  | --I  per eseguire solo l'installazione
-#4 | Gutmann   | -g  | --G  per eseguire la formattazione con Gutmann
-#5 | completeG | -cg | --CG per eseguire tutti i passaggi con Gutmann
-#
-#Premere INVIO per uscire" $r $c 
-#	                    exit 2;;
-#	                    
-#esac
 
 
 exit 0
