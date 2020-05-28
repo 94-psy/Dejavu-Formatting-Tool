@@ -1,6 +1,7 @@
 # piallatore-seriale
 
 ENG:
+
 The Piallatore-seriale is a tool, made in shell bash, useful for destroying data on your hard disks. It's designed to work with several drives at the same time and also to install your IMG or ISO file.
 
 There are two possible formatting ways: one "soft" with the combination of BadBlocks and DD for a total of 5 patterns at low level; one more intense, with the Gutmann method for a total of 35 pattern.
@@ -13,9 +14,10 @@ Future improving:
 
 - add a config file for server path, file type, and other settings
 - add English interface
+\n
 
+ITA:
 
-ITA
 Il Piallatore-seriale è un tool, fatto in shell bash, utile per distruggere i dati dei tuoi hard disk. Il tool è progettato per lavorare con diversi dischi allo stesso tempo e anche per installare i tuoi file IMG o ISO.
 
 Ci sono due posibili tipi di formattazioni: una più "leggera" che combina BadBlocks e DD per un totale di 5 passaggi a basso livello; una più intensa che sfrutta il metodo Gutmann per un totale di 35 passaggi a basso livello.
