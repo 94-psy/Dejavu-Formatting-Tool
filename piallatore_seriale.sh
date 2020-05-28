@@ -3,7 +3,7 @@ casa=$HOME
 #add current position of the script in order to avoid misunderstanding for the followind IF statement
 if [[ $EUID -ne 0 ]];
 then
-    exec sudo ./formatta_dischi_collegati.sh 
+    exec sudo ./piallatore_seriale.sh 
 fi
 #da fare: mettere la formattazione con gutmann come quarta voce del menù e, soprattutto, usare un IF per verficare che comando dare o che serie di comandi dare per evitare due funzioni
 
