@@ -26,15 +26,20 @@ spengo=true
 nome_file="dejavu.img"
 version="0.0.2 1/2"
 titolo="Piallatore seriale"
-server="ftp://192.168.67.66/"
-percorso_server="$server~/$nome_file"
+
+server="" #it has to be set before starting a download. it could be an IP address or a symbolic address
+
+percorso_server="$server/$nome_file"
 percorso_server_md5="$server~/$nome_file.md5"
 cartella_di_lavoro="$casa/.iso_dejavu"
 percorso_locale="$cartella_di_lavoro/$nome_file"
 percorso_locale_md5="$cartella_di_lavoro/$nome_file.md5"
 percorso_locale_md5_scaricato="$cartella_di_lavoro/dejavu_nuovo.img.md5"
-user="server"
-passwd=""
+
+#testing for removal
+#user="server"
+#passwd=""
+
 dischi_totali=0
 
 
@@ -51,14 +56,10 @@ function prepara_file ()
 
 function scan_disks ()
 {
-    #for i in `seq 0 32`; do echo "- - -" | sudo tee /sys/class/scsi_host/host$i/scan; ls /dev/sd* ; done
     clear
     sudo lsblk -io KNAME,TYPE,MOUNTPOINT  >> '$file'  
-    #df -T /path |tail -n 1 |awk '{print $1}'
-    #lsblk --nodeps -no name
-
 }
-#la riga sopra mi definisce dove salvare e leggere il file
+
 
 
 function get_disks ()
@@ -70,30 +71,29 @@ function get_disks ()
     prepara_file
     scan_disks
 
-    while read nome tipo punto_di_mount #questa parte legge il file riga per riga
+    while read nome tipo punto_di_mount 
     do
         if [ "$punto_di_mount" == "/" ] ;
         then
             da_evitare=$nome
         fi
-    done < '$file' #per evitare delle subshell eseguite, mi legge il file fino alla fine
+    done < '$file' 
     tipo_disco="${da_evitare::-5}"
     case "$tipo_disco" in
 	    nvme)	da_evitare="${da_evitare::-2}" ;;
 	    *) da_evitare="${da_evitare::-1}";;	
     esac
-    ##cancella da da_evitare il numero della partizione
-    #da_evitare="${da_evitare::-1}"
-    while read nome tipo punto_di_mount #questa parte legge il file riga per riga
+
+    while read nome tipo punto_di_mount 
     do
         if [ "$tipo" == "disk" -a "$da_evitare" != "$nome" ] ;
         then
             lista_dischi+=("$nome")
         fi
-    done < '$file' #per evitare delle subshell eseguite, mi legge il file fino alla fine
+    done < '$file'
     for i in ${lista_dischi[@]}; do
         (( dischi_totali += 1))
-        #echo $i
+        #echo $i #for debub
     done
     echo "ho trovato $dischi_totali"
 }
@@ -104,21 +104,26 @@ function formatta ()
     touch .counter
     for i in ${lista_dischi[@]};
     do
-        #rm log_"$i"
         rm log_"$i" 2>/dev/null
         #touch log_"$i" 
         rm -rf .tmp_"$i" 2>/dev/null
         echo "Avvio il disco /dev/$i"
         echo "echo 'Avvio il disco /dev/$i'" >> .tmp_"$i"
-        #echo -n "comando=$()" >> .tmp_"$i"
-        #echo "sudo badblocks -fwsv /dev/$i >> log_$i" >> .tmp_"$i"
+       
+        #badblocks part, 4 destructive path
+        #echo "sudo badblocks -fwsv /dev/$i >> log_$i" >> .tmp_"$i" 
+	
+	#DD with another 0 path
         #echo "dd if=/dev/zero of=/dev/$i status=progress" >> .tmp_"$i"
+	
+	#test part for writing on log file that there were errors
         #&& echo 'no error on /dev/$i at starting time $(date)'>> log_$i || echo 'error on /dev/$i at starting time $(date)'
+	
         echo "echo '1' >> .counter" >> .tmp_"$i"
         echo "rm .tmp_$i" >> .tmp_"$i"
         echo "exit 0" >> .tmp_"$i"
         chmod +x .tmp_"$i"
-        sudo x-terminal-emulator -e "./.tmp_$i" &
+        sudo x-terminal-emulator -e "./.tmp_$i" & #to be tesetd
         #sudo xfce4-terminal -e "./.tmp_$i" &
         #mate-terminal -e "./.tmp_$i" &
         #gnome-terminal --command "./.tmp_$i" &
@@ -127,12 +132,12 @@ function formatta ()
     
     while [ $indice -lt ${#lista_dischi[@]} ];do
         indice=0
-        sleep 1 #attesa prima del ricontrollo
-        while read contatore #questa parte legge il file riga per riga
+        sleep 1 #to be set correctly, usually it has to check every 30 minutes if the formatting is finished
+        while read contatore 
         do
-          #echo $tipo
+          #echo $tipo	#debug
             (( indice += $contatore))
-        done < ".counter" #per evitare delle subshell eseguite, mi legge il file fino alla fine
+        done < ".counter" 
 	echo $(( $indice * 100 / $dischi_totali )) | dialog --title "$titolo" --gauge "Avanzamento formattazione..." $r $c 0
 	done
 	clear
@@ -143,10 +148,10 @@ function formatta ()
     
     if [ -s log_"$i" ] 
     then
-    	#echo "$_file has some data."
+    	#echo "$_file has some data."	#debug
         smartctl -i /dev/"$i" >> log_"$i" 
     else
-    	#echo "$_file is empty."
+    	#echo "$_file is empty."	#debug
         rm log_"$i" 2>/dev/null     
     fi
     
@@ -161,13 +166,15 @@ function formattag ()
 {
     for i in ${lista_dischi[@]};
     do
-        #rm log_"$i"
+        rm log_"$i" 2>/dev/null
         #touch log_"$i" 
         rm -rf .tmp_"$i"
         echo "Avvio il disco /dev/$i"
         echo "echo 'Avvio il disco /dev/$i'" >> .tmp_"$i"
-        #echo -n "comando=$()" >> .tmp_"$i"
+
+	#Gutmann method
         #echo "sudo nwipe --autonuke --logfile=log_$i --method=gutmann /dev/$i " >> .tmp_"$i"
+	
         echo "echo '1' >> .counter" >> .tmp_"$i"
         echo "rm .tmp_$i" >> .tmp_"$i"
         echo "exit 0" >> .tmp_"$i"
@@ -181,12 +188,12 @@ function formattag ()
     while [ $indice -lt ${#lista_dischi[@]} ];do
         indice=0
         sleep 1
-        while read contatore #questa parte legge il file riga per riga
+        while read contatore 
         do
-          #echo $tipo
+          #echo $tipo	#debug
             (( indice += $contatore))
             
-        done < ".counter" #per evitare delle subshell eseguite, mi legge il file fino alla fine
+        done < ".counter" 
     
     done
 
@@ -196,19 +203,24 @@ function formattag ()
 function check_img_update ()
 
 {
-    curl --user "$user":"$passwd" -o "$percorso_locale_md5_scaricato" "{$percorso_server_md5}"
+    sudo rm -rf "$percorso_locale_md5_scaricato"	#to be tested
+    wget "{$percorso_server_md5}"
+    #curl --user "$user":"$passwd" -o "$percorso_locale_md5_scaricato" "{$percorso_server_md5}"
+    
+    #computing MD5 checksum
     md5sum "$percorso_locale" | awk '{ print $1}' > "$percorso_locale_md5"
 
-    md5_server=$(sudo head -n 1 "$percorso_locale_md5_scaricato") #md5sum appena scaricato
-    md5_local=$(sudo head -n 1 "$percorso_locale_md5") #md5sum preesistente
+    md5_server=$(sudo head -n 1 "$percorso_locale_md5_scaricato") #md5sum just downloaded
+    md5_local=$(sudo head -n 1 "$percorso_locale_md5") #md5sum already on local drive
 
     if [ "$md5_local" = "$md5_server" ] ; then
             echo "non aggiorno"
-            #non aggiorno l'iso
+            #if I'm here it means that i dont have to update the img file
         else
             echo "aggiorno"
             sudo mv "$percorso_locale_md5_scaricato" "$percorso_locale_md5"
-            sudo curl --user "$user":"$passwd" -o "$percorso_locale" "{$percorso_server}"
+	    wget "{$percorso_server}" #to be tested
+            #sudo curl --user "$user":"$passwd" -o "$percorso_locale" "{$percorso_server}"
     fi
 
 }
@@ -220,14 +232,15 @@ function installa ()
     touch .i_counter
     for i in ${lista_dischi[@]};
     do
-        #rm log_"$i"
         rm log_i_"$i" 2>/dev/null
         #touch log_"$i" 
         rm -rf .tmp_i_"$i" 2>/dev/null
         echo "Avvio il disco /dev/$i"
         echo "echo 'Avvio il disco /dev/$i'" >> .tmp_i_"$i"
+	#Installing with DD
         #echo "dd if=percorso_iso of=/dev/$i status=progress" >> .tmp_i_"$i"
-        echo "echo '1' >> .i_counter" >> .tmp_i_"$i"
+        
+	echo "echo '1' >> .i_counter" >> .tmp_i_"$i"
         echo "rm .tmp_i_$i" >> .tmp_i_"$i"
         echo "exit 0" >> .tmp_"$i"
         chmod +x .tmp_i_"$i"
@@ -241,11 +254,11 @@ function installa ()
 
         while [ $indicei -lt ${#lista_dischi[@]} ];do
         indicei=0
-        sleep 1 #tempo di attesa tra i controlli
-            while read contatore #questa parte legge il file riga per riga
+        sleep 1 #to be set correctly, usually it has to check every 30 minutes if the formatting is finished
+            while read contatore 
             do
                 (( indicei += $contatore))
-            done < ".i_counter" #per evitare delle subshell eseguite, mi legge il file fino alla fine
+            done < ".i_counter" 
             echo $(( $indicei * 100 / $dischi_totali )) | dialog --title "$titolo" --gauge "Avanzamento installazione..." $r $c 0
             #echo $indicei
         done
@@ -277,12 +290,9 @@ function dipendenze ()
 
 {
     {
-        echo "\Installo curl.."
-        sudo apt intall curl -y 2>/dev/null
-        echo 33
         echo "\Installo nwipe.."
         sudo apt install nwipe -y 2>/dev/null
-        echo 66
+        echo 50
         echo "\Installo wget.."
         sudo apt install wget -y 2>/dev/null
         echo 100
@@ -304,7 +314,7 @@ W=$(whiptail --title "Menù $titolo $version" --menu "Elenco delle funzionalità
 
 case "$W" in 
 	1)	spegnimento
-	    dipendenze
+	    	dipendenze
 		get_disks 
 		check_img_update &
 		formatta
