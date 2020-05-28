@@ -14,7 +14,8 @@ Future improving:
 
 - add a config file for server path, file type, and other settings
 - add English interface
-\n
+
+---------------------------------------------------------------------------------
 
 ITA:
 
