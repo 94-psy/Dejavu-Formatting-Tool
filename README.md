@@ -1,6 +1,6 @@
-# piallatore-seriale
+# Piallatore-seriale
 
-ENG:
+##ENG:
 
 The Piallatore-seriale is a tool, made in shell bash, useful for destroying data on your hard disks. It's designed to work with several drives at the same time and also to install your IMG or ISO file.
 
@@ -17,7 +17,7 @@ Future improving:
 
 ---------------------------------------------------------------------------------
 
-ITA:
+##ITA:
 
 Il Piallatore-seriale è un tool, fatto in shell bash, utile per distruggere i dati dei tuoi hard disk. Il tool è progettato per lavorare con diversi dischi allo stesso tempo e anche per installare i tuoi file IMG o ISO.
 
