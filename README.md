@@ -1,8 +1,8 @@
-# Piallatore-seriale
+# Dejavu Formatting Tool
 
 ## ENG:
 
-The Piallatore-seriale is a tool, made in shell bash, useful for destroying data on your hard disks. It's designed to work with several drives at the same time and also to install your IMG or ISO file.
+The Dejavu Formatting Tool is a tool, made in shell bash, useful for destroying data on your hard disks. It's designed to work with several drives at the same time and also to install your IMG or ISO file.
 
 There are two possible formatting ways: one "soft" with the combination of BadBlocks and DD for a total of 5 patterns at low level; one more intense, with the Gutmann method for a total of 35 pattern.
 
@@ -10,16 +10,13 @@ There is also an option that allows you to install your ISO or IMG or what you w
 
 At the moment it works with every usb and sata device. It should work also with NVME devices and IDE devices ( i will test some IDE in the future)
 
-Future improving:
 
-- add a config file for server path, file type, and other settings
-- add English interface
 
 ---------------------------------------------------------------------------------
 
 ## ITA:
 
-Il Piallatore-seriale è un tool, fatto in shell bash, utile per distruggere i dati dei tuoi hard disk. Il tool è progettato per lavorare con diversi dischi allo stesso tempo e anche per installare i tuoi file IMG o ISO.
+Il Dejavu Formatting Tool è un tool, fatto in shell bash, utile per distruggere i dati dei tuoi hard disk. Il tool è progettato per lavorare con diversi dischi allo stesso tempo e anche per installare i tuoi file IMG o ISO.
 
 Ci sono due posibili tipi di formattazioni: una più "leggera" che combina BadBlocks e DD per un totale di 5 passaggi a basso livello; una più intensa che sfrutta il metodo Gutmann per un totale di 35 passaggi a basso livello.
 
@@ -27,7 +24,4 @@ C'è anche un'opzione che consente di installare la propria immagine ISO o IMG o
 
 Al momento lavora con tutti i dispositivi USB e SATA. Dovrebbe funzionare anche coi dispositivi NVME e IDE (testerò i dispositivi IDE in futuro)
 
-Miglioramenti futuri:
 
-- aggiunta di un file di configurazione per il percorso del server, tipologia di file e altre impostazioni
-- aggiunta dell'interfaccia in inglese
