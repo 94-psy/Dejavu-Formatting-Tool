@@ -1,5 +1,5 @@
 #!/bin/bash
-casa=$HOME
+home=$HOME
 #add current position of the script in order to avoid misunderstanding for the followind IF statement
 if [[ $EUID -ne 0 ]];
 then
@@ -23,30 +23,73 @@ c=$(( c < 70 ? 70 : c ))
 
 declare -a partitions=()
 spengo=true
-nome_file="dejavu.img"
-version="0.0.3"
-titolo="Piallatore seriale"
 
-server="" #it has to be set before starting a download. it could be an IP address or a symbolic address
+version="0.0.4"
+titolo="Dejavu Formatting Tool"
 
-percorso_server="$server/$nome_file"
-percorso_server_md5="$server/$nome_file.md5"
-cartella_di_lavoro="$casa/.Piallatore_seriale"
-percorso_locale="$cartella_di_lavoro/$nome_file"
-percorso_locale_md5="$cartella_di_lavoro/$nome_file.md5"
-percorso_locale_md5_scaricato="$cartella_di_lavoro/dejavu_nuovo.img.md5"
+function create_config_file ()
+{
+    rm $conf_file
+    touch $conf_file
+    whiptail --title "Missing Config File" --msgbox "The configurration file is missing, now we will create a new one. Please answer the short questions" $r $c 
+    SETTINGS=$(whiptail --inputbox "What is the Server address? (I.E. 10.0.0.3)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
+    echo "SERVER_ADDR=$SETTINGS" >> $conf_file
+    SETTINGS=$(whiptail --inputbox "What is the name of the file that has to be retrieved? (I.E. my_file.iso or my_file.img)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
+    echo "FILE_NAME=$SETTINGS" >> $conf_file
+    SETTINGS=$(whiptail --inputbox "What is the name of the checksum file that has to be retrieved? (I.E. my_file.iso.md5 NB: ATE THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
+    echo "FILE_CHECK_NAME=$SETTINGS" >> $conf_file
+    SETTINGS=$(whiptail --title "Configuration file" --radiolist \
+    "Choose user's language"  $r $c 4 \
+    "EN" "English (default)" ON \
+    "IT" "Italian" OFF 3>&1 1>&2 2>&3)
+    echo "LAN=$SETTINGS" >> $conf_file
+}
 
-waiting_time=30*60
+working_dir="$home/.Dejavu"
+conf_file="$working_dir/configuration.conf"
+
+if [ -f "$working_dir" ]; then
+    echo "OK"
+   else
+   mkdir -p $working_dir
+fi
+
+if [ -f "$conf_file" ]; then
+    echo "OK"
+    else
+    create_config_file
+fi
+
+#MANCA DA CONTROLLARE PEZZO A PEZZO SE CI FOSSE TUTTO
+server=$( cat configuration.conf | grep SERVER_ADDR= | tr -d SERVER_ADDR= )
+file_name=$( cat configuration.conf | grep FILE_NAME= | tr -d FILE_NAME= ) 
+language=$( cat configuration.conf | grep LAN= | tr -d LAN= )
+
+server_check="$server/$( cat configuration.conf | grep FILE_CHECK_NAME= | tr -d FILE_CHECK_NAME= )"
+server_dir="$server/$file_name" 
+local_file="$working_dir/$file_name"
+locale_check="$working_dir/$( cat configuration.conf | grep FILE_CHECK_NAME= | tr -d FILE_CHECK_NAME= )"
+local_check_downloaded="$locale_check.new"
+
+waiting_time=30*60 #30 seconds * 60 = 30 minutes
 
 
-dischi_totali=0
+total_disks=0
+
+case "$language" in 
+	IT|iT|It|it ) #set IT
+	 ;;
+				
+	*) #set eng
+	 ;;
+esac
 
 
 function prepara_file ()
 {
-    file="$casa/.tmp_part.txt"
-    mkdir -p $cartella_di_lavoro
-    sudo chmod 777 --recursive $cartella_di_lavoro
+    file="$home/.tmp_part.txt"
+    mkdir -p $working_dir
+    sudo chmod 777 --recursive $working_dir
     rm -rf .counter
     rm -rf '$file'
     touch '$file'
@@ -63,45 +106,45 @@ function scan_disks ()
 
 function get_disks ()
 {
-    indice=0
-    indicei=0
-    dischi_totali=0
-    lista_dischi=()
+    index=0
+    indexi=0
+    total_disks=0
+    disks_list=()
     prepara_file
     scan_disks
 
-    while read nome tipo punto_di_mount 
+    while read name dsk_type mounting_point 
     do
-        if [ "$punto_di_mount" == "/" ] ;
+        if [ "$mounting_point" == "/" ] ;
         then
-            da_evitare=$nome
+            to_avoid=$name
         fi
     done < '$file' 
-    tipo_disco="${da_evitare::-5}"
-    case "$tipo_disco" in
-	    nvme)	da_evitare="${da_evitare::-2}" ;;
-	    *) da_evitare="${da_evitare::-1}";;	
+    dsk_type_disco="${to_avoid::-5}"
+    case "$dsk_type_disco" in
+	    nvme)	to_avoid="${to_avoid::-2}" ;;
+	    *) to_avoid="${to_avoid::-1}";;	
     esac
 
-    while read nome tipo punto_di_mount 
+    while read name dsk_type mounting_point 
     do
-        if [ "$tipo" == "disk" -a "$da_evitare" != "$nome" ] ;
+        if [ "$dsk_type" == "disk" -a "$to_avoid" != "$name" ] ;
         then
-            lista_dischi+=("$nome")
+            disks_list+=("$name")
         fi
     done < '$file'
-    for i in ${lista_dischi[@]}; do
-        (( dischi_totali += 1))
-        #echo $i #for debub
+    for i in ${disks_list[@]}; do
+        (( total_disks += 1))
+        #echo $i #for debug
     done
-    echo "ho trovato $dischi_totali"
+    echo "ho trovato $total_disks"
 }
 
 
 function formatta ()
 {
     touch .counter
-    for i in ${lista_dischi[@]};
+    for i in ${disks_list[@]};
     do
         rm log_"$i" 2>/dev/null
         #touch log_"$i" 
@@ -126,20 +169,20 @@ function formatta ()
     done
     rm -rf '$file'
     
-    while [ $indice -lt ${#lista_dischi[@]} ];do
-        indice=0
+    while [ $index -lt ${#disks_list[@]} ];do
+        index=0
         sleep $waiting_time #to be set correctly, usually it has to check every 30 minutes if the formatting is finished
         while read contatore 
         do
-          #echo $tipo	#debug
-            (( indice += $contatore))
+          #echo $dsk_type	#debug
+            (( index += $contatore))
         done < ".counter" 
-	echo $(( $indice * 100 / $dischi_totali )) | dialog --title "$titolo" --gauge "Avanzamento formattazione..." $r $c 0
+	echo $(( $index * 100 / $total_disks )) | dialog --title "$titolo" --gauge "Avanzamento formattazione..." $r $c 0
 	done
 	clear
     
     
-    for i in ${lista_dischi[@]};
+    for i in ${disks_list[@]};
     do
     
     if [ -s log_"$i" ] 
@@ -160,7 +203,7 @@ function formatta ()
     
 function formattag ()
 {
-    for i in ${lista_dischi[@]};
+    for i in ${disks_list[@]};
     do
         rm log_"$i" 2>/dev/null
         rm -rf .tmp_"$i"
@@ -179,13 +222,13 @@ function formattag ()
     done
     rm -rf '$file'
     
-    while [ $indice -lt ${#lista_dischi[@]} ];do
-        indice=0
+    while [ $index -lt ${#disks_list[@]} ];do
+        index=0
         sleep $waiting_time #to be set correctly, usually it has to check every 30 minutes if the formatting is finished
         while read contatore 
         do
-          #echo $tipo	#debug
-            (( indice += $contatore))
+          #echo $dsk_type	#debug
+            (( index += $contatore))
             
         done < ".counter" 
     
@@ -194,7 +237,7 @@ function formattag ()
     rm -rf .counter
 }
 
-function check_img_update ()
+function check_img_update () #  DA RIFARE TUTTA
 
 {
     sudo rm -rf "$percorso_locale_md5_scaricato"	
@@ -225,7 +268,7 @@ function installa ()
 
 {
     touch .i_counter
-    for i in ${lista_dischi[@]};
+    for i in ${disks_list[@]};
     do
         rm log_i_"$i" 2>/dev/null
         rm -rf .tmp_i_"$i" 2>/dev/null
@@ -243,14 +286,14 @@ function installa ()
     done
     rm -rf '$file'
 
-        while [ $indicei -lt ${#lista_dischi[@]} ];do
-        indicei=0
+        while [ $indexi -lt ${#disks_list[@]} ];do
+        indexi=0
         sleep $waiting_time #to be set correctly, usually it has to check every 30 minutes if the formatting is finished
             while read contatore 
             do
-                (( indicei += $contatore))
+                (( indexi += $contatore))
             done < ".i_counter" 
-            echo $(( $indicei * 100 / $dischi_totali )) | dialog --title "$titolo" --gauge "Avanzamento installazione..." $r $c 0
+            echo $(( $indexi * 100 / $total_disks )) | dialog --title "$titolo" --gauge "Avanzamento installazione..." $r $c 0
         done
         clear
 
