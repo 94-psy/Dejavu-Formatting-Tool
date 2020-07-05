@@ -120,8 +120,8 @@ function get_disks ()
             to_avoid=$name
         fi
     done < '$file' 
-    dsk_type_disco="${to_avoid::-5}"
-    case "$dsk_type_disco" in
+    dsk_type="${to_avoid::-5}"
+    case "$dsk_type" in
 	    nvme)	to_avoid="${to_avoid::-2}" ;;
 	    *) to_avoid="${to_avoid::-1}";;	
     esac
