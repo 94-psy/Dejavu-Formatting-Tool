@@ -400,7 +400,7 @@ W=$(whiptail --title "Menù $titolo $version" --menu "$MainMenu" $r $c 6 \
 	"1" "$SubMenu1" \
 	"2" "$SubMenu2" \
 	"3" "$SubMenu3"  3>&1 1>&2 2>&3)
-192.168.67.66/dejavu.img.md5
+
 case "$W" in 
 	1)	spegnimento
 		get_disks 
