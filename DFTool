@@ -1,0 +1,426 @@
+#!/bin/bash
+home=$HOME
+#add current position of the script in order to avoid misunderstanding for the followind IF statement
+binary_location="/usr/bin"
+
+
+if [[ $EUID -ne 0 ]];
+then
+if [ -f "$binary_location/DFTool" ]; then
+    exec sudo DFTool
+    else
+    exec sudo ./DFTool
+fi
+     
+fi
+#da fare: mettere la formattazione con gutmann come quarta voce del menù e, soprattutto, usare un IF per verficare che comando dare o che serie di comandi dare per evitare due funzioni
+
+
+# Find the rows and columns will default to 80x24 is it can not be detected
+screen_size=$(stty size 2>/dev/null || echo 24 80) 
+rows=$(echo $screen_size | awk '{print $1}')
+columns=$(echo $screen_size | awk '{print $2}')
+
+# Definisco le dimensioni dell'interfaccia:
+r=$(( rows / 2 ))
+c=$(( columns / 2 ))
+# e nel caso in cui lo schermo sia piccolo
+r=$(( r < 20 ? 20 : r ))
+c=$(( c < 70 ? 70 : c ))
+
+
+declare -a partitions=()
+turnoff=true
+
+version="0.0.4"
+titolo="Dejavu Formatting Tool"
+
+function create_config_file ()
+{
+    rm $conf_file
+    touch $conf_file
+    whiptail --title "Missing Config File" --msgbox "The configurration file is missing, now we will create a new one. Please answer the short questions" $r $c 
+    SETTINGS=$(whiptail --inputbox "What is the Server address of the file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3) #ragioanre su indirizzo con file
+    echo "SERVER_ADDR=$SETTINGS" >> $conf_file
+    SETTINGS=$(whiptail --inputbox "What is the name of the file that has to be retrieved? (I.E. my_file.iso or my_file.img)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3) #ragioanre su indirizzo con file
+    echo "FILE_NAME=$SETTINGS" >> $conf_file
+    SETTINGS=$(whiptail --inputbox "What is the name of the checksum file that has to be retrieved? (I.E. my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3) #ragioanre su indirizzo con file
+    echo "FILE_CHECK_NAME=$SETTINGS" >> $conf_file
+    SETTINGS=$(whiptail --inputbox "What is the Server address of the checksum file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3) #ragioanre su indirizzo con file
+    echo "FILE_CHECK_DEST=$SETTINGS" >> $conf_file
+    SETTINGS=$(whiptail --title "Configuration file" --radiolist \
+    "Choose user's language"  $r $c 4 \
+    "EN" "English (default)" ON \
+    "IT" "Italian" OFF 3>&1 1>&2 2>&3)
+    echo "LAN=$SETTINGS" >> $conf_file
+    dipendenze
+    echo "DEP=OK" >> $conf_file
+}
+
+
+
+working_dir="$home/.Dejavu"
+conf_file="$working_dir/configuration.conf"
+
+
+if [ -f "$working_dir" ]; then
+    echo "OK"
+   else
+   mkdir -p $working_dir
+fi
+
+if [ -f "$conf_file" ]; then
+    echo "OK"
+    else
+    create_config_file
+fi
+
+#MANCA DA CONTROLLARE PEZZO A PEZZO SE CI FOSSE TUTTO
+server=$( cat $conf_file | grep SERVER_ADDR= | tr -d SERVER_ADDR= ) #contains the  server destination of the file
+file_name=$( cat $conf_file | grep FILE_NAME= | tr -d FILE_NAME= )  #contains the  local file name
+language=$( cat $conf_file | grep LAN= | tr -d LAN= )
+
+server_check=$( cat $conf_file | grep FILE_CHECK_DEST= | tr -d FILE_CHECK_DEST= ) #contains the  server destination of the checksum
+#server_dir="$server/$file_name" #inutile ragionando per percorso completo per server
+local_file="$working_dir/$file_name" #contains the  local position of the file
+local_check_name=$( cat $conf_file | grep FILE_CHECK_NAME= | tr -d FILE_CHECK_NAME= )
+locale_check="$working_dir/$local_check_name" #contains the  local position of the checksum file
+local_check_downloaded="$locale_check.new" #contains the  local position of the downloaded checksum file
+dep="$( cat $conf_file | grep DEP= | tr -d DEP= )"
+waiting_time=$((30*60)) #30 seconds * 60 = 30 minutes
+
+function update_config ()
+{
+    rm $conf_file
+    touch $conf_file
+    echo "SERVER_ADDR=$server" >> $conf_file
+    echo "FILE_NAME=$file_name" >> $conf_file
+    echo "FILE_CHECK_NAME=$local_check_name" >> $conf_file
+    echo "FILE_CHECK_DEST=$server_check" >> $conf_file
+    echo "LAN=$language" >> $conf_file
+    echo "DEP=$dep" >> $conf_file
+        
+        
+}
+
+
+
+
+total_disks=0
+case "$dep" in
+    OK) ;;
+    *) dipendenze
+       dep="OK" 
+       update_config ;;
+esac
+
+#dependency
+
+case "$language" in 
+	IT|iT|It|it ) #set IT
+	MainMenu="Elenco delle principali funzionalità:"
+	SubMenu1="Formatta i dischi, installa il sistema e uscire dal programma"
+	SubMenu2="Formatta i dischi"
+	SubMenu3="Installa il sistema"
+	StartDSK="Avvio il disco /dev"
+	FormattingProgress="Avanzamento formattazione..."
+	InstallingProgress="Avanzamento installazione..."
+	PCShutdown="Spegnere il PC alla fine del processo?"
+	Dependency="Controllando le dipendenze"
+	DSKFOUND="I dischi su cui lavorare trovati ammontano a:"
+	 ;;
+				
+	*) #set eng
+	MainMenu="List of main functions:"
+	SubMenu1="Formatting disks, installing OS, exiting program"
+	SubMenu2="Formatting disks"
+	SubMenu3="Installing OS"
+	StartDSK="Starting disk /dev"
+	FormattingProgress="Formatting progress..."
+	InstallingProgress="Installing progress..."
+	PCShutdown="Turn off the PC at the end of the process?"
+	Dependency="Checking dependecies"
+	DSKFOUND="The total number of disks where is possible to work on is:"
+	 ;;
+esac
+
+
+function prepara_file ()
+{
+    file="$home/.tmp_part.txt"
+    mkdir -p $working_dir
+    sudo chmod 777 --recursive $working_dir
+    rm -rf .counter
+    rm -rf '$file'
+    touch '$file'
+    
+}
+
+function scan_disks ()
+{
+    clear
+    sudo lsblk -io KNAME,TYPE,MOUNTPOINT  >> '$file'  
+}
+
+
+
+function get_disks ()
+{
+    index=0
+    indexi=0
+    total_disks=0
+    disks_list=()
+    prepara_file
+    scan_disks
+
+    while read name dsk_type mounting_point 
+    do
+        if [ "$mounting_point" == "/" ] ;
+        then
+            to_avoid=$name
+        fi
+    done < '$file' 
+    dsk_type="${to_avoid::-5}"
+    case "$dsk_type" in
+	    nvme)	to_avoid="${to_avoid::-2}" ;;
+	    *) to_avoid="${to_avoid::-1}";;	
+    esac
+
+    while read name dsk_type mounting_point 
+    do
+        if [ "$dsk_type" == "disk" -a "$to_avoid" != "$name" ] ;
+        then
+            disks_list+=("$name")
+        fi
+    done < '$file'
+    for i in ${disks_list[@]}; do
+        (( total_disks += 1))
+        #echo $i #for debug
+    done
+    echo "$DSKFOUND $total_disks"
+}
+
+
+function formatta ()
+{
+    touch .counter
+    for i in ${disks_list[@]};
+    do
+        rm log_"$i" 2>/dev/null
+        #touch log_"$i" 
+        rm -rf .tmp_"$i" 2>/dev/null
+        echo "$StartDSK/$i"
+        echo "echo '$StartDSK/$i'" >> .tmp_"$i"
+       
+        #badblocks part, 4 destructive pattern
+        #echo "sudo badblocks -fwsv /dev/$i >> log_$i" >> .tmp_"$i" 
+	
+    	#DD with another 0 pattern
+        #echo "dd if=/dev/zero of=/dev/$i status=progress" >> .tmp_"$i"
+	
+	    #test part for writing on log file that there were errors
+        #&& echo 'no error on /dev/$i at starting time $(date)'>> log_$i || echo 'error on /dev/$i at starting time $(date)'
+
+        echo "echo '1' >> .counter" >> .tmp_"$i"
+        echo "rm .tmp_$i" >> .tmp_"$i"
+        echo "exit 0" >> .tmp_"$i"
+        chmod +x .tmp_"$i"
+        sudo x-terminal-emulator -e "./.tmp_$i" & 
+    done
+    rm -rf '$file'
+    
+    while [ $index -lt ${#disks_list[@]} ];do
+        index=0
+        sleep $waiting_time #to be set correctly, usually it has to check every 30 minutes if the formatting is finished
+        while read contatore 
+        do
+          #echo $dsk_type	#debug
+            (( index += $contatore))
+        done < ".counter" 
+	echo $(( $index * 100 / $total_disks )) | dialog --title "$titolo" --gauge "$FormattingProgress" $r $c 0
+	done
+	clear
+    
+    
+    for i in ${disks_list[@]};
+    do
+    
+    if [ -s log_"$i" ] 
+    then
+    	#echo "$_file has some data."	#debug
+        smartctl -i /dev/"$i" >> log_"$i" 
+    else
+    	#echo "$_file is empty."	#debug
+        rm log_"$i" 2>/dev/null     
+    fi
+    
+    done
+    
+    
+    rm -rf .counter 2>/dev/null
+}
+    
+    
+function formattag ()
+{
+    for i in ${disks_list[@]};
+    do
+        rm log_"$i" 2>/dev/null
+        rm -rf .tmp_"$i"
+        echo "$StartDSK/$i"
+        echo "echo '$StartDSK/$i'" >> .tmp_"$i"
+
+	    #Gutmann method
+        #echo "sudo nwipe --autonuke --logfile=log_$i --method=gutmann /dev/$i " >> .tmp_"$i"
+	
+        echo "echo '1' >> .counter" >> .tmp_"$i"
+        echo "rm .tmp_$i" >> .tmp_"$i"
+        echo "exit 0" >> .tmp_"$i"
+        chmod +x .tmp_"$i"
+        sudo x-terminal-emulator -e "./.tmp_$i" &
+
+    done
+    rm -rf '$file'
+    
+    while [ $index -lt ${#disks_list[@]} ];do
+        index=0
+        sleep $waiting_time #to be set correctly, usually it has to check every 30 minutes if the formatting is finished
+        while read contatore 
+        do
+          #echo $dsk_type	#debug
+            (( index += $contatore))
+        done < ".counter" 
+	echo $(( $index * 100 / $total_disks )) | dialog --title "$titolo" --gauge "$FormattingProgress" $r $c 0
+	done
+
+    rm -rf .counter
+}
+
+function check_img_update () 
+
+{
+    sudo rm -rf "$local_check_downloaded"	
+    wget $server_check -O $local_check_downloaded
+
+    
+    #computing MD5 checksum
+    md5sum "$local_file" | awk '{ print $1}' > "$locale_check"
+
+    md5_server=$(sudo head -n 1 "$local_check_downloaded") #md5sum just downloaded
+    md5_local=$(sudo head -n 1 "$locale_check") #md5sum already on local drive
+
+    if [ "$md5_local" = "$md5_server" ] ; then
+            echo "Update not necessary"
+
+        else
+            echo "Updating.."
+            sudo mv "$local_check_downloaded" "$locale_check"
+            sudo rm -rf $local_file 2>/dev/null
+	        wget $server -O $local_file 
+
+    fi
+    sudo rm -rf $local_check_downloaded 2>/dev/null
+}
+
+
+function installa ()
+
+{
+    touch .i_counter
+    for i in ${disks_list[@]};
+    do
+        rm log_i_"$i" 2>/dev/null
+        rm -rf .tmp_i_"$i" 2>/dev/null
+        echo "$StartDSK/$i"
+        echo "echo '$StartDSK/$i'" >> .tmp_i_"$i"
+	    #Installing with DD
+        #echo "dd if=percorso_iso of=/dev/$i status=progress" >> .tmp_i_"$i"
+        
+	    echo "echo '1' >> .i_counter" >> .tmp_i_"$i"
+        echo "rm .tmp_i_$i" >> .tmp_i_"$i"
+        echo "exit 0" >> .tmp_"$i"
+        chmod +x .tmp_i_"$i"
+        sudo x-terminal-emulator -e "./.tmp_i_$i" &
+
+    done
+    rm -rf '$file'
+
+        while [ $indexi -lt ${#disks_list[@]} ];do
+        indexi=0
+        sleep $waiting_time #to be set correctly, usually it has to check every 30 minutes if the formatting is finished
+            while read contatore 
+            do
+                (( indexi += $contatore))
+            done < ".i_counter" 
+            echo $(( $indexi * 100 / $total_disks )) | dialog --title "$titolo" --gauge "$InstallingProgress" $r $c 0
+        done
+        clear
+
+    rm -rf .i_counter 2>/dev/null 
+
+
+}
+
+function spegnimento ()
+{
+    if (whiptail  --title "$titolo" --yesno "$PCShutdown" $r $c ); then
+        turnoff=true
+    
+    else
+        turnoff=false
+    fi
+}
+
+function spegni () 
+{
+if [ "$turnoff" = true ]; then
+    sudo poweroff
+fi 
+}
+
+function dipendenze ()
+
+{
+    {
+        echo "\Installing nwipe.."
+        sudo apt install nwipe -y 2>/dev/null
+        echo 2
+
+    } |whiptail --title "$titolo" --gauge "$Dependency" $r $c 0
+}
+
+
+##inizio prorgamma##
+
+clear
+
+
+
+W=$(whiptail --title "Menù $titolo $version" --menu "$MainMenu" $r $c 6 \
+	"1" "$SubMenu1" \
+	"2" "$SubMenu2" \
+	"3" "$SubMenu3"  3>&1 1>&2 2>&3)
+
+case "$W" in 
+	1)	spegnimento
+		get_disks 
+		check_img_update &
+		formatta
+		get_disks 
+		installa 
+		spegni ;;
+	2)	spegnimento
+		get_disks
+		formatta
+		spegni ;;
+	3)	spegnimento
+		get_disks
+		check_img_update
+		installa
+		spegni ;;
+				
+	*) exit 1 ;;
+esac
+
+
+exit 0
