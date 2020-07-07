@@ -8,8 +8,10 @@ if [[ $EUID -ne 0 ]];
 then
 if [ -f "$binary_location/DFTool" ]; then
     exec sudo DFTool
+    IsInstalled=1
     else
     exec sudo ./DFTool
+    IsInstalled=2
 fi
      
 fi
@@ -87,7 +89,7 @@ local_check_name=$( cat $conf_file | grep FILE_CHECK_NAME= | tr -d FILE_CHECK_NA
 locale_check="$working_dir/$local_check_name" #contains the  local position of the checksum file
 local_check_downloaded="$locale_check.new" #contains the  local position of the downloaded checksum file
 dep="$( cat $conf_file | grep DEP= | tr -d DEP= )"
-waiting_time=$((30*60)) #30 seconds * 60 = 30 minutes
+waiting_time=60 #check every 60 seconds
 
 function update_config ()
 {
@@ -114,7 +116,7 @@ case "$dep" in
        update_config ;;
 esac
 
-#dependency
+
 
 case "$language" in 
 	IT|iT|It|it ) #set IT
@@ -122,28 +124,58 @@ case "$language" in
 	SubMenu1="Formatta i dischi, installa il sistema e uscire dal programma"
 	SubMenu2="Formatta i dischi"
 	SubMenu3="Installa il sistema"
+	SubMenu4="Opzioni avanzate"
+	ADV1="Aggiorna i file locali"
+	ADV2="Aggiorna ed installa il DFTool"
+	ADV3="Controlla le dipendenze"
+	ADV4=""
 	StartDSK="Avvio il disco /dev"
 	FormattingProgress="Avanzamento formattazione..."
 	InstallingProgress="Avanzamento installazione..."
 	PCShutdown="Spegnere il PC alla fine del processo?"
 	Dependency="Controllando le dipendenze"
 	DSKFOUND="I dischi su cui lavorare trovati ammontano a:"
+	WGETERROR="Server non raggiungibile, i file locali non saranno aggiornati"
 	 ;;
 				
-	*) #set eng
+	*) #set EN
 	MainMenu="List of main functions:"
 	SubMenu1="Formatting disks, installing OS, exiting program"
 	SubMenu2="Formatting disks"
 	SubMenu3="Installing OS"
+	SubMenu4="Advanced options"
+	ADV1="Update local files"
+	ADV2="Update and install the DFTool"
+	ADV3="Check dependency"
+	ADV4=""
 	StartDSK="Starting disk /dev"
 	FormattingProgress="Formatting progress..."
 	InstallingProgress="Installing progress..."
 	PCShutdown="Turn off the PC at the end of the process?"
 	Dependency="Checking dependecies"
 	DSKFOUND="The total number of disks where is possible to work on is:"
+	WGETERROR="Server unreachable, local files won't be updated"
 	 ;;
 esac
 
+
+function update_DFTool ()
+{
+#download from github the latest and move to $binary_location
+
+
+# wget github.com/foo -O /tmp/DFTool_tmp
+#nversion=$( cat /tmp/DFTool_tmp | grep version= | tr -d version= ) 
+#if [ "$version" = "$nversion" ] ; then
+#    echo "Already Update"
+#else
+#    echo "Updating.."
+#    sudo mv -f /tmp/DFTool_tmp "$binary_location"/DFTool
+#fi
+
+    echo "/tmp"
+#    sudo DFTool & exit 0 #to be tested in the menù
+}
 
 function prepara_file ()
 {
@@ -203,7 +235,7 @@ function get_disks ()
 
 function formatta ()
 {
-    touch .counter
+    touch "$working_dir"/.counter
     for i in ${disks_list[@]};
     do
         rm "$working_dir"/log_"$i" 2>/dev/null
@@ -221,8 +253,8 @@ function formatta ()
 	    #test part for writing on log file that there were errors
         #&& echo 'no error on /dev/$i at starting time $(date)'>> log_$i || echo 'error on /dev/$i at starting time $(date)'
 
-        echo "echo '1' >> .counter" >> "$working_dir"/.tmp_"$i"
-        echo "rm .tmp_$i" >> "$working_dir"/.tmp_"$i"
+        echo "echo '1' >> $working_dir/.counter" >> "$working_dir"/.tmp_"$i"
+        echo "rm $working_dir/.tmp_$i" >> "$working_dir"/.tmp_"$i"
         echo "exit 0" >> "$working_dir"/.tmp_"$i"
         chmod +x "$working_dir"/.tmp_"$i"
         sudo x-terminal-emulator -e "$working_dir/.tmp_$i" & 
@@ -231,17 +263,25 @@ function formatta ()
     
     while [ $index -lt ${#disks_list[@]} ];do
         index=0
-        sleep $waiting_time #to be set correctly, usually it has to check every 30 minutes if the formatting is finished
+        
         while read contatore 
         do
           #echo $dsk_type	#debug
             (( index += $contatore))
-        done < ".counter" 
+        done < "$working_dir/.counter" 
 	echo $(( $index * 100 / $total_disks )) | dialog --title "$titolo" --gauge "$FormattingProgress" $r $c 0
+	
+	if [[ $index -ge $total_disks ]]; then
+	    sleep 1
+	else
+	sleep $waiting_time
+	fi
+	 
 	done
+	
 	clear
     
-    
+    #LOGGING INFO 
     for i in ${disks_list[@]};
     do
     
@@ -257,7 +297,7 @@ function formatta ()
     done
     
     
-    rm -rf .counter 2>/dev/null
+    rm -rf "$working_dir/".counter 2>/dev/null
 }
     
     
@@ -273,8 +313,8 @@ function formattag ()
 	    #Gutmann method
         #echo "sudo nwipe --autonuke --logfile=log_$i --method=gutmann /dev/$i " >> "$working_dir"/.tmp_"$i"
 	
-        echo "echo '1' >> .counter" >> "$working_dir"/.tmp_"$i"
-        echo "rm .tmp_$i" >> "$working_dir"/.tmp_"$i"
+        echo "echo '1' >> $working_dir/.counter" >> "$working_dir"/.tmp_"$i"
+        echo "rm $working_dir/.tmp_$i" >> "$working_dir"/.tmp_"$i"
         echo "exit 0" >> "$working_dir"/.tmp_"$i"
         chmod +x "$working_dir"/.tmp_"$i"
         sudo x-terminal-emulator -e "$working_dir/.tmp_$i" &
@@ -284,79 +324,114 @@ function formattag ()
     
     while [ $index -lt ${#disks_list[@]} ];do
         index=0
-        sleep $waiting_time #to be set correctly, usually it has to check every 30 minutes if the formatting is finished
+        
         while read contatore 
         do
           #echo $dsk_type	#debug
             (( index += $contatore))
-        done < ".counter" 
+        done < "$working_dir/.counter" 
 	echo $(( $index * 100 / $total_disks )) | dialog --title "$titolo" --gauge "$FormattingProgress" $r $c 0
+	
+	if [[ $index -ge $total_disks ]]; then
+	    sleep 1
+	else
+	    sleep $waiting_time
+	fi
+	 
 	done
+	clear
+	
+    #LOGGING INFO 
+    for i in ${disks_list[@]};
+    do
+    
+    if [ -s "$working_dir"/log_"$i" ] 
+    then
+    	#echo "$_file has some data."	#debug
+        smartctl -i /dev/"$i" >> "$working_dir"/log_"$i" 
+    else
+    	#echo "$_file is empty."	#debug
+        rm "$working_dir"/log_"$i" 2>/dev/null     
+    fi
+    
+    done
 
-    rm -rf .counter
+    rm -rf "$working_dir/".counter 2>/dev/null
 }
 
 function check_img_update () 
 
 {
     sudo rm -rf "$local_check_downloaded"	
-    wget $server_check -O $local_check_downloaded
-
+    wget $server_check -O $local_check_downloaded  2> /dev/null
+    exitstatus="$?"
     
-    #computing MD5 checksum
-    md5sum "$local_file" | awk '{ print $1}' > "$locale_check"
+    if [[ "$exitstatus" -eq 0 ]] ; then
+        #computing MD5 checksum
+        md5sum "$local_file" | awk '{ print $1}' > "$locale_check"
 
-    md5_server=$(sudo head -n 1 "$local_check_downloaded") #md5sum just downloaded
-    md5_local=$(sudo head -n 1 "$locale_check") #md5sum already on local drive
+        md5_server=$(sudo head -n 1 "$local_check_downloaded") #md5sum just downloaded
+        md5_local=$(sudo head -n 1 "$locale_check") #md5sum already on local drive
 
-    if [ "$md5_local" = "$md5_server" ] ; then
-            echo "Update not necessary"
+        if [ "$md5_local" = "$md5_server" ] ; then
+                echo "Update not necessary"
 
-        else
-            echo "Updating.."
-            sudo mv "$local_check_downloaded" "$locale_check"
-            sudo rm -rf $local_file 2>/dev/null
-	        wget $server -O $local_file 
+            else
+                echo "Updating.."
+                sudo mv "$local_check_downloaded" "$locale_check"
+                sudo rm -rf $local_file 2>/dev/null
+    	        wget $server -O $local_file  2> /dev/null
 
+        fi
+        sudo rm -rf $local_check_downloaded 2>/dev/null
+    else
+        echo "$WGETERROR"
     fi
-    sudo rm -rf $local_check_downloaded 2>/dev/null
 }
 
 
 function installa ()
 
 {
-    touch .i_counter
+    touch "$working_dir"/.i_counter
     for i in ${disks_list[@]};
     do
-        rm log_i_"$i" 2>/dev/null
+        rm "$working_dir"/log_i_"$i" 2>/dev/null
         rm -rf "$working_dir"/.tmp_i_"$i" 2>/dev/null
         echo "$StartDSK/$i"
         echo "echo '$StartDSK/$i'" >> "$working_dir"/.tmp_i_"$i"
 	    #Installing with DD
         #echo "dd if=percorso_iso of=/dev/$i status=progress" >> "$working_dir"/.tmp_i_"$i"
         
-	    echo "echo '1' >> .i_counter" >> "$working_dir"/.tmp_i_"$i"
-        echo "rm .tmp_i_$i" >> "$working_dir"/.tmp_i_"$i"
-        echo "exit 0" >> "$working_dir"/.tmp_"$i"
+	    echo "echo '1' >> $working_dir/.i_counter" >> "$working_dir"/.tmp_i_"$i"
+        echo "rm $working_dir/.tmp_$i" >> "$working_dir"/.tmp_i_"$i"
+        echo "exit 0" >> "$working_dir"/.tmp_i_"$i"
         chmod +x "$working_dir"/.tmp_i_"$i"
         sudo x-terminal-emulator -e "$working_dir/.tmp_i_$i" &
 
     done
     rm -rf '$file'
 
-        while [ $indexi -lt ${#disks_list[@]} ];do
-        indexi=0
-        sleep $waiting_time #to be set correctly, usually it has to check every 30 minutes if the formatting is finished
-            while read contatore 
-            do
-                (( indexi += $contatore))
-            done < ".i_counter" 
-            echo $(( $indexi * 100 / $total_disks )) | dialog --title "$titolo" --gauge "$InstallingProgress" $r $c 0
-        done
+    while [ $index -lt ${#disks_list[@]} ];do
+        index=0
+        
+        while read contatore 
+        do
+          #echo $dsk_type	#debug
+            (( index += $contatore))
+        done < "$working_dir/.i_counter" 
+	echo $(( $index * 100 / $total_disks )) | dialog --title "$titolo" --gauge "$InstallingProgress" $r $c 0
+	
+	if [[ $index -ge $total_disks ]]; then
+	    sleep 1
+	else
+	    sleep $waiting_time
+	fi
+	 
+	done
         clear
 
-    rm -rf .i_counter 2>/dev/null 
+    rm -rf "$working_dir"/.i_counter 2>/dev/null 
 
 
 }
@@ -384,8 +459,11 @@ function dipendenze ()
     {
         echo "\Installing nwipe.."
         sudo apt install nwipe -y 2>/dev/null
-        echo 2
-
+        echo 50
+        echo "\Installing smartmontools.."
+        sudo apt install smartmontools -y 2>/dev/null
+        echo 100
+        
     } |whiptail --title "$titolo" --gauge "$Dependency" $r $c 0
 }
 
@@ -399,12 +477,13 @@ clear
 W=$(whiptail --title "Menù $titolo $version" --menu "$MainMenu" $r $c 6 \
 	"1" "$SubMenu1" \
 	"2" "$SubMenu2" \
-	"3" "$SubMenu3"  3>&1 1>&2 2>&3)
+	"3" "$SubMenu3" \
+	"4" "$SubMenu4"  3>&1 1>&2 2>&3)
 
 case "$W" in 
 	1)	spegnimento
 		get_disks 
-		check_img_update &
+		check_img_update & clear
 		formatta
 		get_disks 
 		installa 
@@ -418,6 +497,21 @@ case "$W" in
 		check_img_update
 		installa
 		spegni ;;
+	4)  
+	    Z=$(whiptail --title "Menù $titolo $version" --menu "$MainMenu" $r $c 6 \
+        	"1" "$ADV1" \
+        	"2" "$ADV2" \
+        	"3" "$ADV3" \
+        	"4" "$ADV4"  3>&1 1>&2 2>&3)
+        	case "$Z" in 
+        	    1) check_img_update ;;
+        	    2) update_DFTool ;;
+        	    3) dipendenze
+                   dep="OK" 
+                   update_config ;;
+        	    4) ;;
+        	    *) exit 2 ;;
+        	esac ;;
 				
 	*) exit 1 ;;
 esac
