@@ -2,7 +2,7 @@
 home=$HOME
 #add current position of the script in order to avoid misunderstanding for the followind IF statement
 binary_location="/usr/bin"
-
+updateconf=0
 
 if [[ $EUID -ne 0 ]];
 then
@@ -11,7 +11,7 @@ if [ -f "$binary_location/DFTool" ]; then
     IsInstalled=1
     else
     exec sudo ./DFTool
-    IsInstalled=2
+    IsInstalled=0
 fi
      
 fi
@@ -37,18 +37,33 @@ turnoff=true
 version="0.0.4"
 titolo="Dejavu Formatting Tool"
 
+function dipendenze ()
+
+{
+    {
+        echo "\Installing nwipe.."
+        sudo apt install nwipe -y 2>/dev/null
+        echo 50
+        echo "\Installing smartmontools.."
+        sudo apt install smartmontools -y 2>/dev/null
+        echo 100
+        
+    } |whiptail --title "$titolo" --gauge "$Dependency" $r $c 0
+}
+
+
 function create_config_file ()
 {
     rm $conf_file
     touch $conf_file
     whiptail --title "Missing Config File" --msgbox "The configurration file is missing, now we will create a new one. Please answer the short questions" $r $c 
-    SETTINGS=$(whiptail --inputbox "What is the Server address of the file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3) #ragioanre su indirizzo con file
+    SETTINGS=$(whiptail --inputbox "What is the Server address of the file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
     echo "SERVER_ADDR=$SETTINGS" >> $conf_file
-    SETTINGS=$(whiptail --inputbox "What is the name of the file that has to be retrieved? (I.E. my_file.iso or my_file.img)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3) #ragioanre su indirizzo con file
+    SETTINGS=$(whiptail --inputbox "What is the name of the file that has to be retrieved? (I.E. my_file.iso or my_file.img)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3) 
     echo "FILE_NAME=$SETTINGS" >> $conf_file
-    SETTINGS=$(whiptail --inputbox "What is the name of the checksum file that has to be retrieved? (I.E. my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3) #ragioanre su indirizzo con file
+    SETTINGS=$(whiptail --inputbox "What is the name of the checksum file that has to be retrieved? (I.E. my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
     echo "FILE_CHECK_NAME=$SETTINGS" >> $conf_file
-    SETTINGS=$(whiptail --inputbox "What is the Server address of the checksum file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3) #ragioanre su indirizzo con file
+    SETTINGS=$(whiptail --inputbox "What is the Server address of the checksum file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
     echo "FILE_CHECK_DEST=$SETTINGS" >> $conf_file
     SETTINGS=$(whiptail --title "Configuration file" --radiolist \
     "Choose user's language"  $r $c 4 \
@@ -66,34 +81,70 @@ conf_file="$working_dir/configuration.conf"
 
 
 if [ -f "$working_dir" ]; then
-    echo "OK"
+    echo "Working directory is OK"
    else
    mkdir -p $working_dir
 fi
 
 if [ -f "$conf_file" ]; then
-    echo "OK"
+    echo "Config file is OK"
     else
     create_config_file
 fi
 
 #MANCA DA CONTROLLARE PEZZO A PEZZO SE CI FOSSE TUTTO
 server=$( cat $conf_file | grep SERVER_ADDR= | tr -d SERVER_ADDR= ) #contains the  server destination of the file
+if [ -z "$server" ]; then
+    #it's empty
+    updateconf=1
+    server=$(whiptail --inputbox "What is the Server address of the file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file)" $r $c --title "Configuration file incomplete" 3>&1 1>&2 2>&3)
+fi
 file_name=$( cat $conf_file | grep FILE_NAME= | tr -d FILE_NAME= )  #contains the  local file name
+if [ -z "$file_name" ]; then
+    #it's empty
+    updateconf=1
+    file_name=$(whiptail --inputbox "What is the name of the file that has to be retrieved? (I.E. my_file.iso or my_file.img)" $r $c --title "Configuration file incomplete" 3>&1 1>&2 2>&3)
+fi
+
 language=$( cat $conf_file | grep LAN= | tr -d LAN= )
+if [ -z "$language" ]; then
+    #it's empty
+    updateconf=1
+    language=$(whiptail --title "Configuration file incomplete" --radiolist \
+    "Choose user's language"  $r $c 4 \
+    "EN" "English (default)" ON \
+    "IT" "Italian" OFF 3>&1 1>&2 2>&3)
+fi
 
 server_check=$( cat $conf_file | grep FILE_CHECK_DEST= | tr -d FILE_CHECK_DEST= ) #contains the  server destination of the checksum
-#server_dir="$server/$file_name" #inutile ragionando per percorso completo per server
+if [ -z "$server_check" ]; then
+    #it's empty
+    updateconf=1
+    server_check=$(whiptail --inputbox "What is the Server address of the checksum file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
+fi
+
 local_file="$working_dir/$file_name" #contains the  local position of the file
 local_check_name=$( cat $conf_file | grep FILE_CHECK_NAME= | tr -d FILE_CHECK_NAME= )
+if [ -z "$local_check_name" ]; then
+    #it's empty
+    updateconf=1
+    local_check_name=$(whiptail --inputbox "What is the name of the checksum file that has to be retrieved? (I.E. my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file incomplete" 3>&1 1>&2 2>&3)
+fi
+
 locale_check="$working_dir/$local_check_name" #contains the  local position of the checksum file
 local_check_downloaded="$locale_check.new" #contains the  local position of the downloaded checksum file
 dep="$( cat $conf_file | grep DEP= | tr -d DEP= )"
+if [ -z "$dep" ]; then
+    #it's empty
+    updateconf=1
+    dep
+fi
+
 waiting_time=60 #check every 60 seconds
 
 function update_config ()
 {
-    rm $conf_file
+    mv $conf_file "$conf_file.old" 
     touch $conf_file
     echo "SERVER_ADDR=$server" >> $conf_file
     echo "FILE_NAME=$file_name" >> $conf_file
@@ -105,7 +156,10 @@ function update_config ()
         
 }
 
-
+if [ $updateconf -eq 1 ]; then
+    update_config
+    updateconf=0
+fi
 
 
 total_disks=0
@@ -130,6 +184,10 @@ case "$language" in
 	ADV2="Aggiorna ed installa il DFTool"
 	ADV3="Controlla le dipendenze"
 	ADV4=""
+	INFO1="Home page di Credere per Vedere"
+	INFO2="Home page del Progetto Dejavu"
+	INFO3="Pagina Facebook di Credere per Vedere"
+	INFO4="Pagina Facebook del Progetto Dejavu"
 	StartDSK="Avvio il disco /dev"
 	FormattingProgress="Avanzamento formattazione..."
 	InstallingProgress="Avanzamento installazione..."
@@ -150,6 +208,10 @@ case "$language" in
 	ADV2="Update and install the DFTool"
 	ADV3="Check dependency"
 	ADV4=""
+	INFO1="Home page of Credere per Cedere"
+	INFO2="Home page of Dejavu Project"
+	INFO3="Facebook page of Credere per Veder"
+	INFO4="Facebook page of Dejavu Project"
 	StartDSK="Starting disk /dev"
 	FormattingProgress="Formatting progress..."
 	InstallingProgress="Installing progress..."
@@ -455,19 +517,15 @@ if [ "$turnoff" = true ]; then
 fi 
 }
 
-function dipendenze ()
-
+function reopenDFTool ()
 {
-    {
-        echo "\Installing nwipe.."
-        sudo apt install nwipe -y 2>/dev/null
-        echo 50
-        echo "\Installing smartmontools.."
-        sudo apt install smartmontools -y 2>/dev/null
-        echo 100
-        
-    } |whiptail --title "$titolo" --gauge "$Dependency" $r $c 0
+if [ -f "$binary_location/DFTool" ]; then
+   exec sudo DFTool
+   else
+   exec sudo ./DFTool
+fi
 }
+
 
 
 ##inizio prorgamma##
@@ -500,8 +558,7 @@ case "$W" in
 		check_img_update
 		installa
 		spegni ;;
-	4)  
-	    Z=$(whiptail --title "Menù $titolo $version" --menu "$MainMenu" $r $c 6 \
+	4)  Z=$(whiptail --title "Menù $titolo $version" --menu "$MainMenu" $r $c 6 \
         	"1" "$ADV1" \
         	"2" "$ADV2" \
         	"3" "$ADV3" \
@@ -513,9 +570,24 @@ case "$W" in
                    dep="OK" 
                    update_config ;;
         	    4) ;;
-        	    *) exit 2 ;;
+        	    *) reopenDFTool;;
         	esac ;;
-	5) ;;			
+	5)  Y=$(whiptail --title "Menù $titolo $version" --menu "$MainMenu" $r $c 6 \
+        	"1" "$INFO1" \
+        	"2" "$INFO2" \
+        	"3" "$INFO3" \
+        	"4" "$INFO4"  3>&1 1>&2 2>&3)
+        	case "$Y" in 
+        	    1) sensible-browser http://www.crederepervedere.org/ &
+        	       reopenDFTool ;;
+        	    2) sensible-browser https://progettodejavu.blogspot.com/ &
+        	       reopenDFTool ;;
+        	    3) sensible-browser https://www.facebook.com/crederepervedereonlus/ &
+        	       reopenDFTool ;;
+        	    4) sensible-browser https://www.facebook.com/progettodejavu/ &
+        	       reopenDFTool ;;
+        	    *) reopenDFTool ;;
+        	esac ;;			
 	*) exit 1 ;;
 esac
 
