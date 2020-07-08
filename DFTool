@@ -1,5 +1,7 @@
 #!/bin/bash
 home=$HOME
+if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
+
 #add current position of the script in order to avoid misunderstanding for the followind IF statement
 binary_location="/usr/bin"
 updateconf=0
@@ -43,9 +45,12 @@ function dipendenze ()
     {
         echo "\Installing nwipe.."
         sudo apt install nwipe -y 2>/dev/null
-        echo 50
+        echo 33
         echo "\Installing smartmontools.."
         sudo apt install smartmontools -y 2>/dev/null
+        echo 67
+        echo "\Installing sensible-utils.."
+        sudo apt install sensible-utils -y 2>/dev/null
         echo 100
         
     } |whiptail --title "$titolo" --gauge "$Dependency" $r $c 0
@@ -84,9 +89,6 @@ function create_config_file ()
 
 working_dir="$home/.Dejavu"
 conf_file="$working_dir/configuration.conf"
-local_check_downloaded="$locale_check.new" #contains the  local position of the downloaded checksum file
-local_file="$working_dir/$file_name" #contains the  local position of the file
-locale_check="$working_dir/$local_check_name" #contains the  local position of the checksum file
 
 
 if [ -f "$working_dir" ]; then
@@ -158,7 +160,9 @@ if [ -z "$dep" ]; then
     dep
 fi
 
-
+local_check_downloaded="$locale_check.new" #contains the  local position of the downloaded checksum file
+local_file="$working_dir/$file_name" #contains the  local position of the file
+locale_check="$working_dir/$local_check_name" #contains the  local position of the checksum file
 waiting_time=30 #check every 30 seconds
 
 function update_config ()
@@ -216,6 +220,8 @@ case "$language" in
 	Dependency="Controllando le dipendenze"
 	DSKFOUND="I dischi su cui lavorare trovati ammontano a:"
 	WGETERROR="Server non raggiungibile, i file locali non saranno aggiornati"
+	ERRORT="ERRORE"
+	INSTERR="Il file di installazione è mancante, installazione annullata. Provare ad aggiornare il file o controllare la connessione ad Internet"
 	CFM="Scegliere il metodo di formattazione"
 	CF="Scegliere quale metodo di formattazione si vuole usare"
 	FTEXTM="Scegliere il metodo di formattazione per questa sessione"
@@ -248,6 +254,8 @@ case "$language" in
 	Dependency="Checking dependecies"
 	DSKFOUND="The total number of disks where is possible to work on is:"
 	WGETERROR="Server unreachable, local files won't be updated"
+	ERRORT="ERROR"
+	INSTERR="Installation file is missing, the installation is aborted. try to update the file or check your Internet connection"
 	CFM="Choose the formatting method"
 	CF="Choose which formatting method you want to use"
     FTEXTM="Choose the formatting method for this session"
@@ -458,7 +466,7 @@ function check_img_update ()
 
 {
     sudo rm -rf "$local_check_downloaded"	
-    wget $server_check -O $local_check_downloaded  2> /dev/null
+    wget $server_check -O $local_check_downloaded -T 30 -t 1 2> /dev/null
     exitstatus="$?"
     
     if [[ "$exitstatus" -eq 0 ]] ; then
@@ -480,7 +488,7 @@ function check_img_update ()
         fi
         sudo rm -rf $local_check_downloaded 2>/dev/null
     else
-        echo "$WGETERROR"
+    whiptail --title "$ERRORT" --msgbox "$WGETERROR" $r $c
     fi
 }
 
@@ -488,6 +496,8 @@ function check_img_update ()
 function installa ()
 
 {
+if [ -f "$local_file" ]; then #in case of error (missing installation file) i can't install and i will print an error
+
     touch "$working_dir"/.i_counter
     for i in ${disks_list[@]};
     do
@@ -495,16 +505,15 @@ function installa ()
         rm -rf "$working_dir"/.tmp_i_"$i" 2>/dev/null
         echo "$StartDSK/$i"
         echo "echo '$StartDSK/$i'" >> "$working_dir"/.tmp_i_"$i"
-        
-	    #Installing with DD
+      
+        #Installing with DD
         #echo "dd if=percorso_iso of=/dev/$i status=progress" >> "$working_dir"/.tmp_i_"$i"
-        
-	    echo "echo '1' >> $working_dir/.i_counter" >> "$working_dir"/.tmp_i_"$i"
+      
+        echo "echo '1' >> $working_dir/.i_counter" >> "$working_dir"/.tmp_i_"$i"
         echo "rm $working_dir/.tmp_$i" >> "$working_dir"/.tmp_i_"$i"
         echo "exit 0" >> "$working_dir"/.tmp_i_"$i"
         chmod +x "$working_dir"/.tmp_i_"$i"
         sudo x-terminal-emulator -e "$working_dir/.tmp_i_$i" &
-
     done
     rm -rf '$file'
 
@@ -513,22 +522,26 @@ function installa ()
         
         while read contatore 
         do
-          #echo $dsk_type	#debug
+            #echo $dsk_type	#debug
             (( index += $contatore))
         done < "$working_dir/.i_counter" 
-	echo $(( $index * 100 / $total_disks )) | dialog --title "$titolo" --gauge "$InstallingProgress" $r $c 0
-	
-	if [[ $index -ge $total_disks ]]; then
-	    sleep 1
-	else
-	    sleep $waiting_time
-	fi
+        echo $(( $index * 100 / $total_disks )) | dialog --title "$titolo" --gauge "$InstallingProgress" $r $c 0
+
+        if [[ $index -ge $total_disks ]]; then
+            sleep 1
+        else
+            sleep $waiting_time
+        fi
 	 
-	done
-        clear
+    done
+    clear
 
     rm -rf "$working_dir"/.i_counter 2>/dev/null 
 
+else
+
+whiptail --title "$ERRORT" --msgbox "$INSTERR" $r $c
+fi
 
 }
 
@@ -551,6 +564,8 @@ fi
 
 function reopenDFTool ()
 {
+sleep 1
+clear
 if [ -f "$binary_location/DFTool" ]; then
    exec sudo DFTool
    else
@@ -567,6 +582,7 @@ def_formatting=$(whiptail --title "$CFM" --radiolist \
 "G" "$F2" OFF \
 "N" "$F3" OFF 3>&1 1>&2 2>&3)
 }
+
 
 function formatting ()
 {
@@ -592,7 +608,7 @@ clear
 
 
 
-W=$(whiptail --title "Menù $titolo $version" --menu "$MainMenu" $r $c 6 \
+W=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 6 \
 	"1" "$SubMenu1" \
 	"2" "$SubMenu2" \
 	"3" "$SubMenu3" \
@@ -617,7 +633,7 @@ case "$W" in
 		installa
 		spegni ;;
 	4)  
-	    Z=$(whiptail --title "Menù $titolo $version" --menu "$MainMenu" $r $c 6 \
+	    Z=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 6 \
         	"1" "$ADV1" \
         	"2" "$ADV2" \
         	"3" "$ADV3" \
@@ -637,19 +653,19 @@ case "$W" in
         	    *) reopenDFTool;;
         	esac ;;
 	5)  
-	        Y=$(whiptail --title "Menù $titolo $version" --menu "$MainMenu" $r $c 6 \
+	        Y=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 6 \
         	"1" "$INFO1" \
         	"2" "$INFO2" \
         	"3" "$INFO3" \
         	"4" "$INFO4"  3>&1 1>&2 2>&3)
         	case "$Y" in 
-        	    1) sensible-browser http://www.crederepervedere.org/ &
+        	    1) su - $user sensible-browser http://www.crederepervedere.org/ &
         	       reopenDFTool ;;
-        	    2) sensible-browser https://progettodejavu.blogspot.com/ &
+        	    2) su - $user sensible-browser https://progettodejavu.blogspot.com/ &
         	       reopenDFTool ;;
-        	    3) sensible-browser https://www.facebook.com/crederepervedereonlus/ &
+        	    3) su - $user sensible-browser https://www.facebook.com/crederepervedereonlus/ &
         	       reopenDFTool ;;
-        	    4) sensible-browser https://www.facebook.com/progettodejavu/ &
+        	    4) su - $user sensible-browser https://www.facebook.com/progettodejavu/ &
         	       reopenDFTool ;;
         	    *) reopenDFTool ;;
         	esac ;;			
