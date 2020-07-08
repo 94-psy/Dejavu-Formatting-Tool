@@ -197,7 +197,7 @@ esac
 
 
 case "$language" in 
-	IT|iT|It|it ) #set IT
+	IT ) #set IT
 	MainMenu="Elenco delle principali funzionalità:"
 	SubMenu1="Formatta i dischi, installa il sistema e uscire dal programma"
 	SubMenu2="Formatta i dischi"
