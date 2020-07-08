@@ -66,6 +66,12 @@ function create_config_file ()
     SETTINGS=$(whiptail --inputbox "What is the Server address of the checksum file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
     echo "FILE_CHECK_DEST=$SETTINGS" >> $conf_file
     SETTINGS=$(whiptail --title "Configuration file" --radiolist \
+    "Choose default formatting"  $r $c 4 \
+    "D" "Badblocks and DD, 5 pattern (default)" ON \
+    "G" "Gutmann method, 35 pattern" OFF \
+    "N" "Ask every time" OFF 3>&1 1>&2 2>&3)
+    echo "FORM=$SETTINGS" >> $conf_file
+    SETTINGS=$(whiptail --title "Configuration file" --radiolist \
     "Choose user's language"  $r $c 4 \
     "EN" "English (default)" ON \
     "IT" "Italian" OFF 3>&1 1>&2 2>&3)
@@ -78,6 +84,9 @@ function create_config_file ()
 
 working_dir="$home/.Dejavu"
 conf_file="$working_dir/configuration.conf"
+local_check_downloaded="$locale_check.new" #contains the  local position of the downloaded checksum file
+local_file="$working_dir/$file_name" #contains the  local position of the file
+locale_check="$working_dir/$local_check_name" #contains the  local position of the checksum file
 
 
 if [ -f "$working_dir" ]; then
@@ -99,6 +108,7 @@ if [ -z "$server" ]; then
     updateconf=1
     server=$(whiptail --inputbox "What is the Server address of the file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file)" $r $c --title "Configuration file incomplete" 3>&1 1>&2 2>&3)
 fi
+
 file_name=$( cat $conf_file | grep FILE_NAME= | tr -d FILE_NAME= )  #contains the  local file name
 if [ -z "$file_name" ]; then
     #it's empty
@@ -116,6 +126,17 @@ if [ -z "$language" ]; then
     "IT" "Italian" OFF 3>&1 1>&2 2>&3)
 fi
 
+def_formatting=$( cat $conf_file | grep FORM= | tr -d FORM= )
+if [ -z "$language" ]; then
+    #it's empty
+    updateconf=1
+    def_formatting=$(whiptail --title "Configuration file" --radiolist \
+    "Choose default formatting"  $r $c 4 \
+    "D" "Badblocks and DD, 5 pattern (default)" ON \
+    "G" "Gutmann method, 35 pattern" OFF \
+    "N" "Ask every time" OFF 3>&1 1>&2 2>&3)
+fi
+
 server_check=$( cat $conf_file | grep FILE_CHECK_DEST= | tr -d FILE_CHECK_DEST= ) #contains the  server destination of the checksum
 if [ -z "$server_check" ]; then
     #it's empty
@@ -123,7 +144,6 @@ if [ -z "$server_check" ]; then
     server_check=$(whiptail --inputbox "What is the Server address of the checksum file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
 fi
 
-local_file="$working_dir/$file_name" #contains the  local position of the file
 local_check_name=$( cat $conf_file | grep FILE_CHECK_NAME= | tr -d FILE_CHECK_NAME= )
 if [ -z "$local_check_name" ]; then
     #it's empty
@@ -131,8 +151,6 @@ if [ -z "$local_check_name" ]; then
     local_check_name=$(whiptail --inputbox "What is the name of the checksum file that has to be retrieved? (I.E. my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file incomplete" 3>&1 1>&2 2>&3)
 fi
 
-locale_check="$working_dir/$local_check_name" #contains the  local position of the checksum file
-local_check_downloaded="$locale_check.new" #contains the  local position of the downloaded checksum file
 dep="$( cat $conf_file | grep DEP= | tr -d DEP= )"
 if [ -z "$dep" ]; then
     #it's empty
@@ -140,7 +158,8 @@ if [ -z "$dep" ]; then
     dep
 fi
 
-waiting_time=60 #check every 60 seconds
+
+waiting_time=30 #check every 30 seconds
 
 function update_config ()
 {
@@ -152,6 +171,7 @@ function update_config ()
     echo "FILE_CHECK_DEST=$server_check" >> $conf_file
     echo "LAN=$language" >> $conf_file
     echo "DEP=$dep" >> $conf_file
+    echo "FORM=$def_formatting" >> $conf_file
         
         
 }
@@ -183,18 +203,26 @@ case "$language" in
 	ADV1="Aggiorna i file locali"
 	ADV2="Aggiorna ed installa il DFTool"
 	ADV3="Controlla le dipendenze"
-	ADV4=""
+	ADV4="Cambia formattazione di default"
 	INFO1="Home page di Credere per Vedere"
 	INFO2="Home page del Progetto Dejavu"
 	INFO3="Pagina Facebook di Credere per Vedere"
 	INFO4="Pagina Facebook del Progetto Dejavu"
 	StartDSK="Avvio il disco /dev"
-	FormattingProgress="Avanzamento formattazione..."
+	FormattingProgress="Avanzamento formattazione di default..."
+	FormattingProgressG="Avanzamento formattazione con metodo Gutmann..."
 	InstallingProgress="Avanzamento installazione..."
 	PCShutdown="Spegnere il PC alla fine del processo?"
 	Dependency="Controllando le dipendenze"
 	DSKFOUND="I dischi su cui lavorare trovati ammontano a:"
 	WGETERROR="Server non raggiungibile, i file locali non saranno aggiornati"
+	CFM="Scegliere il metodo di formattazione"
+	CF="Scegliere quale metodo di formattazione si vuole usare"
+	FTEXTM="Scegliere il metodo di formattazione per questa sessione"
+	FTEXT="Scegliere quale metodo di formattazione si vuole usare"
+	F1="Badblocks e DD, 5 pattern in totale (default)"
+	F2="Metodo di Gutmann, 35 pattern in totale"
+	F3="Chiedere tutte le volte"
 	 ;;
 				
 	*) #set EN
@@ -207,18 +235,26 @@ case "$language" in
 	ADV1="Update local files"
 	ADV2="Update and install the DFTool"
 	ADV3="Check dependency"
-	ADV4=""
+	ADV4="Change default formatting method"
 	INFO1="Home page of Credere per Cedere"
 	INFO2="Home page of Dejavu Project"
 	INFO3="Facebook page of Credere per Veder"
 	INFO4="Facebook page of Dejavu Project"
 	StartDSK="Starting disk /dev"
-	FormattingProgress="Formatting progress..."
+	FormattingProgress="Default formatting in progress..."
+	FormattingProgressG="Gutmann's method formatting in progress..."
 	InstallingProgress="Installing progress..."
 	PCShutdown="Turn off the PC at the end of the process?"
 	Dependency="Checking dependecies"
 	DSKFOUND="The total number of disks where is possible to work on is:"
 	WGETERROR="Server unreachable, local files won't be updated"
+	CFM="Choose the formatting method"
+	CF="Choose which formatting method you want to use"
+    FTEXTM="Choose the formatting method for this session"
+    FTEXT="Choose which formatting method you want to use"
+	F1="Badblocks and DD, a total of 5 pattern (default)"
+	F2="Gutmann method, a total of 35 pattern"
+	F3="Ask every time"
 	 ;;
 esac
 
@@ -291,7 +327,6 @@ function get_disks ()
     done < '$file'
     for i in ${disks_list[@]}; do
         (( total_disks += 1))
-        #echo $i #for debug
     done
     echo "$DSKFOUND $total_disks"
 }
@@ -303,7 +338,6 @@ function formatta ()
     for i in ${disks_list[@]};
     do
         rm "$working_dir"/log_"$i" 2>/dev/null
-        #touch "$working_dir"/log_"$i" 
         rm -rf "$working_dir"/.tmp_"$i" 2>/dev/null
         echo "$StartDSK/$i"
         echo "echo '$StartDSK/$i'" >> "$working_dir"/.tmp_"$i"
@@ -313,9 +347,6 @@ function formatta ()
 	
     	#DD with another 0 pattern
         #echo "dd if=/dev/zero of=/dev/$i status=progress" >> "$working_dir"/.tmp_"$i"
-	
-	    #test part for writing on log file that there were errors
-        #&& echo 'no error on /dev/$i at starting time $(date)'>> log_$i || echo 'error on /dev/$i at starting time $(date)'
 
         echo "echo '1' >> $working_dir/.counter" >> "$working_dir"/.tmp_"$i"
         echo "rm $working_dir/.tmp_$i" >> "$working_dir"/.tmp_"$i"
@@ -394,7 +425,7 @@ function formattag ()
           #echo $dsk_type	#debug
             (( index += $contatore))
         done < "$working_dir/.counter" 
-	echo $(( $index * 100 / $total_disks )) | dialog --title "$titolo" --gauge "$FormattingProgress" $r $c 0
+	echo $(( $index * 100 / $total_disks )) | dialog --title "$titolo" --gauge "$FormattingProgressG" $r $c 0
 	
 	if [[ $index -ge $total_disks ]]; then
 	    sleep 1
@@ -464,6 +495,7 @@ function installa ()
         rm -rf "$working_dir"/.tmp_i_"$i" 2>/dev/null
         echo "$StartDSK/$i"
         echo "echo '$StartDSK/$i'" >> "$working_dir"/.tmp_i_"$i"
+        
 	    #Installing with DD
         #echo "dd if=percorso_iso of=/dev/$i status=progress" >> "$working_dir"/.tmp_i_"$i"
         
@@ -526,7 +558,33 @@ if [ -f "$binary_location/DFTool" ]; then
 fi
 }
 
+function choose_f ()
+{
+updateconf=1
+def_formatting=$(whiptail --title "$CFM" --radiolist \
+"$CF"  $r $c 4 \
+"D" "$F1" ON \
+"G" "$F2" OFF \
+"N" "$F3" OFF 3>&1 1>&2 2>&3)
+}
 
+function formatting ()
+{
+case "$def_formatting" in
+    D) formatta ;;
+    G) formattag ;;
+    *) 
+        FORMATTING=$(whiptail --title "$FTEXTM" --radiolist \
+        "$FTEXT"  $r $c 6 \
+        "1" "$F1" ON \
+        "2" "$F2" OFF 3>&1 1>&2 2>&3)
+        if [[ "$FORMATTING" -eq 2 ]]; then
+            formattag
+        else
+            formatta
+        fi ;;
+esac
+}
 
 ##inizio prorgamma##
 
@@ -545,34 +603,41 @@ case "$W" in
 	1)	spegnimento
 		get_disks 
 		check_img_update & clear
-		formatta
+		formatting
 		get_disks 
 		installa 
 		spegni ;;
 	2)	spegnimento
 		get_disks
-		formatta
+		formatting
 		spegni ;;
 	3)	spegnimento
 		get_disks
 		check_img_update
 		installa
 		spegni ;;
-	4)  Z=$(whiptail --title "Menù $titolo $version" --menu "$MainMenu" $r $c 6 \
+	4)  
+	    Z=$(whiptail --title "Menù $titolo $version" --menu "$MainMenu" $r $c 6 \
         	"1" "$ADV1" \
         	"2" "$ADV2" \
         	"3" "$ADV3" \
         	"4" "$ADV4"  3>&1 1>&2 2>&3)
         	case "$Z" in 
-        	    1) check_img_update ;;
-        	    2) update_DFTool ;;
+        	    1) check_img_update
+        	       reopenDFTool ;;
+        	    2) update_DFTool
+        	       reopenDFTool ;;
         	    3) dipendenze
                    dep="OK" 
-                   update_config ;;
-        	    4) ;;
+                   update_config
+                   reopenDFTool ;;
+        	    4) choose_f
+        	       update_config
+        	       reopenDFTool ;;
         	    *) reopenDFTool;;
         	esac ;;
-	5)  Y=$(whiptail --title "Menù $titolo $version" --menu "$MainMenu" $r $c 6 \
+	5)  
+	        Y=$(whiptail --title "Menù $titolo $version" --menu "$MainMenu" $r $c 6 \
         	"1" "$INFO1" \
         	"2" "$INFO2" \
         	"3" "$INFO3" \
