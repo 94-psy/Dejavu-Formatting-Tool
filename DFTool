@@ -1,4 +1,5 @@
 #!/bin/bash
+version=0.5
 home=$HOME
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -36,7 +37,7 @@ c=$(( c < 70 ? 70 : c ))
 declare -a partitions=()
 turnoff=true
 
-version="0.0.4"
+
 titolo="Dejavu Formatting Tool"
 
 function dipendenze ()
@@ -88,6 +89,8 @@ function create_config_file ()
 
 
 working_dir="$home/.Dejavu"
+local_bin="$working_dir/bin"
+local_log="$working_dir/log"
 conf_file="$working_dir/configuration.conf"
 
 
@@ -164,6 +167,7 @@ local_check_downloaded="$locale_check.new" #contains the  local position of the 
 local_file="$working_dir/$file_name" #contains the  local position of the file
 locale_check="$working_dir/$local_check_name" #contains the  local position of the checksum file
 waiting_time=30 #check every 30 seconds
+update_server= #TO BE SET FROM GITHUB
 
 function update_config ()
 {
@@ -229,6 +233,9 @@ case "$language" in
 	F1="Badblocks e DD, 5 pattern in totale (default)"
 	F2="Metodo di Gutmann, 35 pattern in totale"
 	F3="Chiedere tutte le volte"
+	UPDFT="Aggiornamento DFTool"
+    UPDOK="Il Dejavu Formatting Tool è già all'ultima versione, premere OK per tornare al menu' principale"
+	UPNO="IL Dejavu Formatting Tool è ora aggiornato all'ultima versione, premere OK per tornare al menu' principale"
 	 ;;
 				
 	*) #set EN
@@ -263,6 +270,9 @@ case "$language" in
 	F1="Badblocks and DD, a total of 5 pattern (default)"
 	F2="Gutmann method, a total of 35 pattern"
 	F3="Ask every time"
+	UPDFT="DFTool Updating"
+	UPDOK="The Dejavu Formatting Tool is already up to date, press OK to return to main menu"
+	UPNO="The Dejavu Formatting Tool is now at last version, press OK to return to main menu"
 	 ;;
 esac
 
@@ -271,25 +281,28 @@ function update_DFTool ()
 {
 #download from github the latest and move to $binary_location
 
-
-# wget github.com/foo -O /tmp/DFTool_tmp
-#nversion=$( cat /tmp/DFTool_tmp | grep version= | tr -d version= ) 
-#if [ "$version" = "$nversion" ] ; then
-#    echo "Already Update"
-#else
-#    echo "Updating.."
-#    sudo mv -f /tmp/DFTool_tmp "$binary_location"/DFTool
-#fi
-
-    echo "/tmp"
-#    sudo DFTool & exit 0 #to be tested in the menù
+wget $update_server -O /tmp/DFTool_tmp -T 30 -t 1 2>/dev/null
+nversion=$( sed -n '2p' /tmp/DFTool_tmp | tr -d version= )
+if [ "$version" = "$nversion" ] ; then #update only when the version is different --> i want to have alway the latest available version (also one modified manualli with a higher version will be replaced)
+    echo "Already Update"
+    whiptail --title "$UPDFT" --msgbox "$UPDOK" $r $c
+else
+    echo "Updating.."
+    chmod +x /tmp/DFTool_tmp
+    sudo mv -f /tmp/DFTool_tmp "$binary_location"/DFTool
+    whiptail --title "$UPDFT" --msgbox "$UPNO" $r $c
+fi
 }
 
 function prepara_file ()
 {
     file="$home/.tmp_part.txt"
     mkdir -p $working_dir
+    mkdir -p $local_bin
+    mkdir -p $local_log
     sudo chmod 777 --recursive $working_dir
+    sudo chmod 777 --recursive $local_bin
+    sudo chmod 777 --recursive $local_log
     rm -rf .counter
     rm -rf '$file'
     touch '$file'
@@ -345,22 +358,25 @@ function formatta ()
     touch "$working_dir"/.counter
     for i in ${disks_list[@]};
     do
-        rm "$working_dir"/log_"$i" 2>/dev/null
-        rm -rf "$working_dir"/.tmp_"$i" 2>/dev/null
+        rm "$local_log"/log_"$i" 2>/dev/null
+        rm -rf "$local_bin"/.tmp_"$i" 2>/dev/null
         echo "$StartDSK/$i"
-        echo "echo '$StartDSK/$i'" >> "$working_dir"/.tmp_"$i"
+        echo "echo '$StartDSK/$i'" >> "$local_bin"/.tmp_"$i"
        
         #badblocks part, 4 destructive pattern
-        #echo "sudo badblocks -fwsv /dev/$i >> log_$i" >> "$working_dir"/.tmp_"$i" 
-	
+        #echo "sudo badblocks -fwsv /dev/$i >> log_$i" >> "$local_bin"/.tmp_"$i" 
+	    
+	    #TO BE TESTED:
+	    #echo "sudo badblocks -fwsv /dev/$i -o $local_log/log_$i" >> "$local_bin"/.tmp_"$i" 
+	    
     	#DD with another 0 pattern
-        #echo "dd if=/dev/zero of=/dev/$i status=progress" >> "$working_dir"/.tmp_"$i"
+        #echo "dd if=/dev/zero of=/dev/$i status=progress" >> "$local_bin"/.tmp_"$i"
 
-        echo "echo '1' >> $working_dir/.counter" >> "$working_dir"/.tmp_"$i"
-        echo "rm $working_dir/.tmp_$i" >> "$working_dir"/.tmp_"$i"
-        echo "exit 0" >> "$working_dir"/.tmp_"$i"
-        chmod +x "$working_dir"/.tmp_"$i"
-        sudo x-terminal-emulator -e "$working_dir/.tmp_$i" & 
+        echo "echo '1' >> $working_dir/.counter" >> "$local_bin"/.tmp_"$i"
+        echo "rm $local_bin/.tmp_$i" >> "$local_bin"/.tmp_"$i"
+        echo "exit 0" >> "$local_bin"/.tmp_"$i"
+        chmod +x "$local_bin"/.tmp_"$i"
+        sudo x-terminal-emulator -e "$local_bin/.tmp_$i" & 
     done
     rm -rf '$file'
     
@@ -384,17 +400,17 @@ function formatta ()
 	
 	clear
     
-    #LOGGING INFO 
+    #LOGGING INFO DA TESTARE
     for i in ${disks_list[@]};
     do
     
-    if [ -s "$working_dir"/log_"$i" ] 
+    if [ -s "$local_log"/log_"$i" ] 
     then
     	#echo "$_file has some data."	#debug
-        smartctl -i /dev/"$i" >> "$working_dir"/log_"$i" 
+        smartctl -i /dev/"$i" >> "$local_log"/log_"$i" 
     else
     	#echo "$_file is empty."	#debug
-        rm "$working_dir"/log_"$i" 2>/dev/null     
+        rm "$local_log"/log_"$i" 2>/dev/null     
     fi
     
     done
@@ -408,19 +424,19 @@ function formattag ()
 {
     for i in ${disks_list[@]};
     do
-        rm "$working_dir"/log_"$i" 2>/dev/null
-        rm -rf "$working_dir"/.tmp_"$i"
+        rm "$local_log"/log_"$i" 2>/dev/null
+        rm -rf "$local_bin"/.tmp_"$i"
         echo "$StartDSK/$i"
-        echo "echo '$StartDSK/$i'" >> "$working_dir"/.tmp_"$i"
+        echo "echo '$StartDSK/$i'" >> "$local_bin"/.tmp_"$i"
 
 	    #Gutmann method
-        #echo "sudo nwipe --autonuke --logfile=log_$i --method=gutmann /dev/$i " >> "$working_dir"/.tmp_"$i"
+        #echo "sudo nwipe --autonuke --logfile=log_$i --method=gutmann /dev/$i " >> "$local_bin"/.tmp_"$i"
 	
-        echo "echo '1' >> $working_dir/.counter" >> "$working_dir"/.tmp_"$i"
-        echo "rm $working_dir/.tmp_$i" >> "$working_dir"/.tmp_"$i"
-        echo "exit 0" >> "$working_dir"/.tmp_"$i"
-        chmod +x "$working_dir"/.tmp_"$i"
-        sudo x-terminal-emulator -e "$working_dir/.tmp_$i" &
+        echo "echo '1' >> $working_dir/.counter" >> "$local_bin"/.tmp_"$i"
+        echo "rm $local_bin/.tmp_$i" >> "$local_bin"/.tmp_"$i"
+        echo "exit 0" >> "$local_bin"/.tmp_"$i"
+        chmod +x "$local_bin"/.tmp_"$i"
+        sudo x-terminal-emulator -e "$local_bin/.tmp_$i" &
 
     done
     rm -rf '$file'
@@ -444,17 +460,17 @@ function formattag ()
 	done
 	clear
 	
-    #LOGGING INFO 
+    #LOGGING INFO  DA TESTARE
     for i in ${disks_list[@]};
     do
     
-    if [ -s "$working_dir"/log_"$i" ] 
+    if [ -s "$local_log"/log_"$i" ] 
     then
     	#echo "$_file has some data."	#debug
-        smartctl -i /dev/"$i" >> "$working_dir"/log_"$i" 
+        smartctl -i /dev/"$i" >> "$local_log"/log_"$i" 
     else
     	#echo "$_file is empty."	#debug
-        rm "$working_dir"/log_"$i" 2>/dev/null     
+        rm "$local_log"/log_"$i" 2>/dev/null     
     fi
     
     done
@@ -501,19 +517,18 @@ if [ -f "$local_file" ]; then #in case of error (missing installation file) i ca
     touch "$working_dir"/.i_counter
     for i in ${disks_list[@]};
     do
-        rm "$working_dir"/log_i_"$i" 2>/dev/null
-        rm -rf "$working_dir"/.tmp_i_"$i" 2>/dev/null
+        rm -rf "$local_bin"/.tmp_i_"$i" 2>/dev/null
         echo "$StartDSK/$i"
-        echo "echo '$StartDSK/$i'" >> "$working_dir"/.tmp_i_"$i"
+        echo "echo '$StartDSK/$i'" >> "$local_bin"/.tmp_i_"$i"
       
         #Installing with DD
-        #echo "dd if=percorso_iso of=/dev/$i status=progress" >> "$working_dir"/.tmp_i_"$i"
+        #echo "dd if=percorso_iso of=/dev/$i status=progress" >> "$local_bin"/.tmp_i_"$i"
       
-        echo "echo '1' >> $working_dir/.i_counter" >> "$working_dir"/.tmp_i_"$i"
-        echo "rm $working_dir/.tmp_$i" >> "$working_dir"/.tmp_i_"$i"
-        echo "exit 0" >> "$working_dir"/.tmp_i_"$i"
-        chmod +x "$working_dir"/.tmp_i_"$i"
-        sudo x-terminal-emulator -e "$working_dir/.tmp_i_$i" &
+        echo "echo '1' >> $working_dir/.i_counter" >> "$local_bin"/.tmp_i_"$i"
+        echo "rm $local_bin/.tmp_i_$i" >> "$local_bin"/.tmp_i_"$i"
+        echo "exit 0" >> "$local_bin"/.tmp_i_"$i"
+        chmod +x "$local_bin"/.tmp_i_"$i"
+        sudo x-terminal-emulator -e "$local_bin/.tmp_i_$i" &
     done
     rm -rf '$file'
 
