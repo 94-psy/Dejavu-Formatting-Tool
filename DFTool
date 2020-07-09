@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.6
+version=0.61
 home=$HOME
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -89,6 +89,7 @@ function create_config_file ()
     echo "LAN=$SETTINGS" >> $conf_file
     dipendenze
     echo "DEP=OK" >> $conf_file
+    echo "DEBUG=OFF" >> $conf_file
 }
 
 
@@ -113,31 +114,36 @@ fi
 
 #MANCA DA CONTROLLARE PEZZO A PEZZO SE CI FOSSE TUTTO
 server=$( cat $conf_file | grep SERVER_ADDR= | tr -d SERVER_ADDR= ) #contains the  server destination of the file
-if [ -z "$server" ]; then
+while [ -z "$server" ]
+do
     #it's empty
     updateconf=1
     server=$(whiptail --inputbox "What is the Server address of the file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file)" $r $c --title "Configuration file incomplete" 3>&1 1>&2 2>&3)
-fi
+done
 
 file_name=$( cat $conf_file | grep FILE_NAME= | tr -d FILE_NAME= )  #contains the  local file name
-if [ -z "$file_name" ]; then
+while [ -z "$file_name" ]
+do
     #it's empty
     updateconf=1
     file_name=$(whiptail --inputbox "What is the name of the file that has to be retrieved? (I.E. my_file.iso or my_file.img)" $r $c --title "Configuration file incomplete" 3>&1 1>&2 2>&3)
-fi
+done
+
 
 language=$( cat $conf_file | grep LAN= | tr -d LAN= )
-if [ -z "$language" ]; then
+while [ -z "$language" ]
+do
     #it's empty
     updateconf=1
     language=$(whiptail --title "Configuration file incomplete" --radiolist \
     "Choose user's language"  $r $c 4 \
     "EN" "English (default)" ON \
     "IT" "Italian" OFF 3>&1 1>&2 2>&3)
-fi
+done
 
 def_formatting=$( cat $conf_file | grep FORM= | tr -d FORM= )
-if [ -z "$language" ]; then
+while [ -z "$def_formatting" ]
+do
     #it's empty
     updateconf=1
     def_formatting=$(whiptail --title "Configuration file" --radiolist \
@@ -145,28 +151,41 @@ if [ -z "$language" ]; then
     "D" "Badblocks and DD, 5 pattern (default)" ON \
     "G" "Gutmann method, 35 pattern" OFF \
     "N" "Ask every time" OFF 3>&1 1>&2 2>&3)
-fi
+done
 
 server_check=$( cat $conf_file | grep FILE_CHECK_DEST= | tr -d FILE_CHECK_DEST= ) #contains the  server destination of the checksum
-if [ -z "$server_check" ]; then
+while [ -z "$server_check" ]
+do
     #it's empty
     updateconf=1
     server_check=$(whiptail --inputbox "What is the Server address of the checksum file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
-fi
+done
 
 local_check_name=$( cat $conf_file | grep FILE_CHECK_NAME= | tr -d FILE_CHECK_NAME= )
-if [ -z "$local_check_name" ]; then
+while [ -z "$local_check_name" ]
+do
     #it's empty
     updateconf=1
     local_check_name=$(whiptail --inputbox "What is the name of the checksum file that has to be retrieved? (I.E. my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file incomplete" 3>&1 1>&2 2>&3)
-fi
+done
 
 dep="$( cat $conf_file | grep DEP= | tr -d DEP= )"
 if [ -z "$dep" ]; then
     #it's empty
     updateconf=1
-    dep
+    dipendenze
+    dep="OK"
 fi
+
+debug_mode="$( cat $conf_file | grep DEBUG= | tr -d DEBUG= )"
+if [ -z "$debug_mode" ]; then
+    #it's empty
+    updateconf=1
+    debug_mode="OFF" #Default is OFF
+
+    
+fi
+
 
 local_check_downloaded="$locale_check.new" #contains the  local position of the downloaded checksum file
 local_file="$working_dir/$file_name" #contains the  local position of the file
@@ -185,7 +204,8 @@ function update_config ()
     echo "LAN=$language" >> $conf_file
     echo "DEP=$dep" >> $conf_file
     echo "FORM=$def_formatting" >> $conf_file
-        
+    echo "DEBUG=$debug_mode" >> $conf_file
+
         
 }
 
@@ -376,15 +396,19 @@ function formatta ()
         echo "$StartDSK/$i"
         echo "echo '$StartDSK/$i'" >> "$local_bin"/.tmp_"$i"
        
-        #badblocks part, 4 destructive pattern
-        #echo "sudo badblocks -fwsv /dev/$i >> log_$i" >> "$local_bin"/.tmp_"$i" 
+       if [[ "$debug_mode" = "OFF" ]]; then
+            echo ""
+            #badblocks part, 4 destructive pattern
+            #echo "sudo badblocks -fwsv /dev/$i >> log_$i" >> "$local_bin"/.tmp_"$i" 
 	    
-	    #TO BE TESTED:
-	    #echo "sudo badblocks -fwsv /dev/$i -o $local_log/log_$i" >> "$local_bin"/.tmp_"$i" 
+	        #TO BE TESTED:
+	        #echo "sudo badblocks -fwsv /dev/$i -o $local_log/log_$i" >> "$local_bin"/.tmp_"$i" 
 	    
-    	#DD with another 0 pattern
-        #echo "dd if=/dev/zero of=/dev/$i status=progress" >> "$local_bin"/.tmp_"$i"
-
+    	    #DD with another 0 pattern
+            #echo "dd if=/dev/zero of=/dev/$i status=progress" >> "$local_bin"/.tmp_"$i"
+        
+        fi
+        
         echo "echo '1' >> $working_dir/.counter" >> "$local_bin"/.tmp_"$i"
         echo "rm $local_bin/.tmp_$i" >> "$local_bin"/.tmp_"$i"
         echo "exit 0" >> "$local_bin"/.tmp_"$i"
@@ -442,9 +466,12 @@ function formattag ()
         echo "$StartDSK/$i"
         echo "echo '$StartDSK/$i'" >> "$local_bin"/.tmp_"$i"
 
-	    #Gutmann method
-        #echo "sudo nwipe --autonuke --logfile=log_$i --method=gutmann /dev/$i " >> "$local_bin"/.tmp_"$i"
-	
+        if [[ "$debug_mode" = "OFF" ]]; then
+        echo ""
+	        #Gutmann method
+            #echo "sudo nwipe --autonuke --logfile=log_$i --method=gutmann /dev/$i " >> "$local_bin"/.tmp_"$i"
+	    fi
+	    
         echo "echo '1' >> $working_dir/.counter" >> "$local_bin"/.tmp_"$i"
         echo "rm $local_bin/.tmp_$i" >> "$local_bin"/.tmp_"$i"
         echo "exit 0" >> "$local_bin"/.tmp_"$i"
@@ -534,9 +561,13 @@ if [ -f "$local_file" ]; then #in case of error (missing installation file) i ca
         echo "$StartDSK/$i"
         echo "echo '$StartDSK/$i'" >> "$local_bin"/.tmp_i_"$i"
       
-        #Installing with DD
-        #echo "dd if=percorso_iso of=/dev/$i status=progress" >> "$local_bin"/.tmp_i_"$i"
+        if [[ "$debug_mode" = "OFF" ]]; then
+      echo ""
+            #Installing with DD
+            #echo "dd if=percorso_iso of=/dev/$i status=progress" >> "$local_bin"/.tmp_i_"$i"
       
+        fi
+        
         echo "echo '1' >> $working_dir/.i_counter" >> "$local_bin"/.tmp_i_"$i"
         echo "rm $local_bin/.tmp_i_$i" >> "$local_bin"/.tmp_i_"$i"
         echo "exit 0" >> "$local_bin"/.tmp_i_"$i"
