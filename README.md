@@ -1,5 +1,12 @@
 # Dejavu Formatting Tool
 
+## WARNING
+
+This project is under development, it's almost finished but not at all. It has several bugs and the major function are still not activated (just uncomment them if you want to try). It's designed to work on pc with many HD/SSD (maybe not only sata but also NVME and IDE devices) that features just one main drive: every secondary HD will be formatted.
+
+
+
+
 ## ENG:
 
 The Dejavu Formatting Tool is a tool, made in shell bash, useful for destroying data on your hard disks. It's designed to work with several drives at the same time and also to install your IMG or ISO file.
