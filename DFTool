@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.5
+version=0.6
 home=$HOME
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -7,14 +7,19 @@ if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 binary_location="/usr/bin"
 updateconf=0
 
-if [[ $EUID -ne 0 ]];
-then
 if [ -f "$binary_location/DFTool" ]; then
-    exec sudo DFTool
     IsInstalled=1
     else
-    exec sudo ./DFTool
     IsInstalled=0
+fi
+
+
+if [[ $EUID -ne 0 ]];
+then
+if [[ $IsInstalled -eq 1 ]]; then
+    exec sudo DFTool
+    else
+    exec sudo ./DFTool
 fi
      
 fi
@@ -167,7 +172,7 @@ local_check_downloaded="$locale_check.new" #contains the  local position of the 
 local_file="$working_dir/$file_name" #contains the  local position of the file
 locale_check="$working_dir/$local_check_name" #contains the  local position of the checksum file
 waiting_time=30 #check every 30 seconds
-update_server= #TO BE SET FROM GITHUB
+update_server=https://raw.githubusercontent.com/94-psy/Dejavu-Formatting-Tool/master/DFTool
 
 function update_config ()
 {
@@ -184,7 +189,7 @@ function update_config ()
         
 }
 
-if [ $updateconf -eq 1 ]; then
+if [[ $updateconf -eq 1 ]] ; then
     update_config
     updateconf=0
 fi
@@ -207,15 +212,17 @@ case "$language" in
 	SubMenu2="Formatta i dischi"
 	SubMenu3="Installa il sistema"
 	SubMenu4="Opzioni avanzate"
-	SubMenu5="Info"
+	SubMenu5="Info - link utili"
 	ADV1="Aggiorna i file locali"
-	ADV2="Aggiorna ed installa il DFTool"
+	ADV2="Aggiorna ed installa il DFTool in $binary_location"
 	ADV3="Controlla le dipendenze"
 	ADV4="Cambia formattazione di default"
+	ADV5="Disinstalla il DFTool da $binary_location"
 	INFO1="Home page di Credere per Vedere"
 	INFO2="Home page del Progetto Dejavu"
 	INFO3="Pagina Facebook di Credere per Vedere"
 	INFO4="Pagina Facebook del Progetto Dejavu"
+	INFO5="Repository di GitHub"
 	StartDSK="Avvio il disco /dev"
 	FormattingProgress="Avanzamento formattazione di default..."
 	FormattingProgressG="Avanzamento formattazione con metodo Gutmann..."
@@ -236,6 +243,8 @@ case "$language" in
 	UPDFT="Aggiornamento DFTool"
     UPDOK="Il Dejavu Formatting Tool è già all'ultima versione, premere OK per tornare al menu' principale"
 	UPNO="IL Dejavu Formatting Tool è ora aggiornato all'ultima versione, premere OK per tornare al menu' principale"
+    TLOG="LOG TROVATI"
+	ERRLOG="La cartella log non è vuota, ci potrebbero essere dei dischi difettosi. Chiudere il programma e controllare manualmente la cartella (attendere qualche istante)? In caso contrario i log saranno cancellati"
 	 ;;
 				
 	*) #set EN
@@ -244,15 +253,17 @@ case "$language" in
 	SubMenu2="Formatting disks"
 	SubMenu3="Installing OS"
 	SubMenu4="Advanced options"
-	SubMenu5="Info"
+	SubMenu5="Info - useful links"
 	ADV1="Update local files"
-	ADV2="Update and install the DFTool"
+	ADV2="Update and install the DFTool in $binary_location"
 	ADV3="Check dependency"
 	ADV4="Change default formatting method"
+	ADV5="Uninstall from $binary_location the DFTool"
 	INFO1="Home page of Credere per Cedere"
 	INFO2="Home page of Dejavu Project"
 	INFO3="Facebook page of Credere per Veder"
 	INFO4="Facebook page of Dejavu Project"
+	INFO5="GitHub repository"
 	StartDSK="Starting disk /dev"
 	FormattingProgress="Default formatting in progress..."
 	FormattingProgressG="Gutmann's method formatting in progress..."
@@ -273,6 +284,8 @@ case "$language" in
 	UPDFT="DFTool Updating"
 	UPDOK="The Dejavu Formatting Tool is already up to date, press OK to return to main menu"
 	UPNO="The Dejavu Formatting Tool is now at last version, press OK to return to main menu"
+	TLOG="LOG FOUND"
+	ERRLOG="The log folder is no empy, maybe there was some bad disks. Would you like to quit and manually check the log folder (wait some moments)? If no logs will be deleted"
 	 ;;
 esac
 
@@ -581,7 +594,7 @@ function reopenDFTool ()
 {
 sleep 1
 clear
-if [ -f "$binary_location/DFTool" ]; then
+if [[ $IsInstalled -eq 1 ]] ; then
    exec sudo DFTool
    else
    exec sudo ./DFTool
@@ -623,6 +636,23 @@ clear
 
 
 
+
+if [ "$(ls -A $local_log)" ]; then #if true is not empty --> some logs in
+    if (whiptail  --title "$TLOG" --yesno "$ERRLOG" $r $c ); then
+        sudo -u $user xdg-open $local_log &
+        exit 3
+    else
+        rm -rf $local_log
+        mkdir -p $local_log
+        sudo chmod 777 --recursive $local_log
+    fi
+fi
+
+
+
+
+
+clear
 W=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 6 \
 	"1" "$SubMenu1" \
 	"2" "$SubMenu2" \
@@ -652,7 +682,8 @@ case "$W" in
         	"1" "$ADV1" \
         	"2" "$ADV2" \
         	"3" "$ADV3" \
-        	"4" "$ADV4"  3>&1 1>&2 2>&3)
+        	"4" "$ADV4" \
+        	"5" "$ADV5"  3>&1 1>&2 2>&3)
         	case "$Z" in 
         	    1) check_img_update
         	       reopenDFTool ;;
@@ -665,6 +696,8 @@ case "$W" in
         	    4) choose_f
         	       update_config
         	       reopenDFTool ;;
+        	    5) rm $binary_location/DFTool
+        	       reopenDFTool ;;
         	    *) reopenDFTool;;
         	esac ;;
 	5)  
@@ -672,7 +705,8 @@ case "$W" in
         	"1" "$INFO1" \
         	"2" "$INFO2" \
         	"3" "$INFO3" \
-        	"4" "$INFO4"  3>&1 1>&2 2>&3)
+        	"4" "$INFO4" \
+        	"5" "$INFO5" 3>&1 1>&2 2>&3)
         	case "$Y" in 
         	    1) su - $user sensible-browser http://www.crederepervedere.org/ &
         	       reopenDFTool ;;
@@ -681,6 +715,8 @@ case "$W" in
         	    3) su - $user sensible-browser https://www.facebook.com/crederepervedereonlus/ &
         	       reopenDFTool ;;
         	    4) su - $user sensible-browser https://www.facebook.com/progettodejavu/ &
+        	       reopenDFTool ;;
+        	    5) su - $user sensible-browser https://github.com/94-psy/Dejavu-Formatting-Tool &
         	       reopenDFTool ;;
         	    *) reopenDFTool ;;
         	esac ;;			
