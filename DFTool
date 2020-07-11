@@ -265,6 +265,9 @@ case "$language" in
 	UPNO="IL Dejavu Formatting Tool è ora aggiornato all'ultima versione, premere OK per tornare al menu' principale"
     TLOG="LOG TROVATI"
 	ERRLOG="La cartella log non è vuota, ci potrebbero essere dei dischi difettosi. Chiudere il programma e controllare manualmente la cartella (attendere qualche istante)? In caso contrario i log saranno cancellati"
+	REMT="Disinstallazione"
+	REM="Rimuovere anche la cartella $working_dir e il suo contenuto?"
+	
 	 ;;
 				
 	*) #set EN
@@ -306,6 +309,8 @@ case "$language" in
 	UPNO="The Dejavu Formatting Tool is now at last version, press OK to return to main menu"
 	TLOG="LOG FOUND"
 	ERRLOG="The log folder is no empy, maybe there was some bad disks. Would you like to quit and manually check the log folder (wait some moments)? If no logs will be deleted"
+    REMT="Uninstalling"
+	REM="Delete also the folder $working_dir and its contents?"
 	 ;;
 esac
 
@@ -728,6 +733,9 @@ case "$W" in
         	       update_config
         	       reopenDFTool ;;
         	    5) rm $binary_location/DFTool
+        	       if (whiptail  --title "$REMT" --yesno "$PCShutdown" $r $c ); then
+                       rm -rf $working_dir
+        	       fi
         	       reopenDFTool ;;
         	    *) reopenDFTool;;
         	esac ;;
