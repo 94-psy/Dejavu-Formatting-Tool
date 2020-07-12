@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.611
+version=0.62
 home=$HOME
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -237,7 +237,8 @@ case "$language" in
 	ADV2="Aggiorna ed installa il DFTool in $binary_location"
 	ADV3="Controlla le dipendenze"
 	ADV4="Cambia formattazione di default"
-	ADV5="Disinstalla il DFTool da $binary_location"
+	ADV5="Isinstalla il DFTool in $binary_location"
+	ADV6="Disinstalla il DFTool da $binary_location"
 	INFO1="Home page di Credere per Vedere"
 	INFO2="Home page del Progetto Dejavu"
 	INFO3="Pagina Facebook di Credere per Vedere"
@@ -281,7 +282,8 @@ case "$language" in
 	ADV2="Update and install the DFTool in $binary_location"
 	ADV3="Check dependency"
 	ADV4="Change default formatting method"
-	ADV5="Uninstall from $binary_location the DFTool"
+    ADV5="Install the DFTool in $binary_location"
+	ADV6="Uninstall from $binary_location the DFTool"
 	INFO1="Home page of Credere per Cedere"
 	INFO2="Home page of Dejavu Project"
 	INFO3="Facebook page of Credere per Veder"
@@ -719,7 +721,8 @@ case "$W" in
         	"2" "$ADV2" \
         	"3" "$ADV3" \
         	"4" "$ADV4" \
-        	"5" "$ADV5"  3>&1 1>&2 2>&3)
+        	"5" "$ADV5"
+        	"6" "$ADV6"  3>&1 1>&2 2>&3)
         	case "$Z" in 
         	    1) check_img_update
         	       reopenDFTool ;;
@@ -732,7 +735,10 @@ case "$W" in
         	    4) choose_f
         	       update_config
         	       reopenDFTool ;;
-        	    5) rm $binary_location/DFTool
+        	    5) wget $update_server -O /tmp/DFTool_tmp -T 30 -t 1 2>/dev/null
+        	       sudo mv -f /tmp/DFTool_tmp "$binary_location"/DFTool
+        	       reopenDFTool ;;
+        	    6) rm $binary_location/DFTool
         	       if (whiptail  --title "$REMT" --yesno "$PCShutdown" $r $c ); then
                        rm -rf $working_dir
         	       fi
