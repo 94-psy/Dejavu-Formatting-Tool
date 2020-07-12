@@ -2,7 +2,7 @@
 
 ## WARNING
 
-This project is under development, it's almost finished but not at all. It has several bugs and the major function are still not activated (just uncomment them if you want to try). It's designed to work on pc with many HD/SSD (maybe not only sata but also NVME and IDE devices) that features just one main drive: every secondary HD will be formatted (also USB devices).
+This project is under development, it's almost finished but not at all. It has several bugs and the major functions are still not activated (just uncomment them if you want to try). It's designed to work on pc with many HD/SSD (maybe not only sata but also NVME and IDE devices) that features just one main drive: every secondary HD will be formatted (also USB devices).
 
 
 
