@@ -721,7 +721,7 @@ case "$W" in
         	"2" "$ADV2" \
         	"3" "$ADV3" \
         	"4" "$ADV4" \
-        	"5" "$ADV5"
+        	"5" "$ADV5" \
         	"6" "$ADV6"  3>&1 1>&2 2>&3)
         	case "$Z" in 
         	    1) check_img_update
