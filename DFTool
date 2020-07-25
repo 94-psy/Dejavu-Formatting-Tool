@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.654
+version=0.655
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -87,7 +87,7 @@ function create_config_file ()
     rm $conf_file
     touch $conf_file
 
-    whiptail --title "Missing Config File" --msgbox "The configurration file is missing, now we will create a new one. Please answer the short questions" $r $c 
+    whiptail --title "Missing Config File in $working_dir" --msgbox "The configurration file is missing, now we will create a new one. Please answer the short questions" $r $c 
     
     #decide if set the installation or not
     if (whiptail  --title "Enable install" --yesno "Enable installing feature?" $r $c ); then
@@ -558,9 +558,9 @@ function reopenDFTool ()
 sleep 1
 clear
 if [[ $IsInstalled -eq 1 ]] ; then
-   exec sudo DFTool
+   sudo -u $user sudo DFTool
 else
-   exec sudo ./DFTool
+   sudo -u $user sudo ./DFTool
 fi
 }
 
