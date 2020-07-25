@@ -204,7 +204,7 @@ function get_disks ()
             to_avoid=$name
         fi
     done < '$file' 
-    dsk_type="${to_avoid::-5}"
+    dsk_type="$(echo $to_avoid | head -c 4)"
     case "$dsk_type" in
 	    nvme)	to_avoid="${to_avoid::-2}" ;;
 	    *) to_avoid="${to_avoid::-1}";;	
