@@ -472,6 +472,15 @@ function installa ()
 
 {
 #if [ -f "$local_file" ]; then #in case of error (missing installation file) i can't install and i will print an error
+if [ -f "$local_file" ]; then
+    echo ""
+else
+    doinstall=false
+    whiptail --title "$ERRORT" --msgbox "$INSTERRFI" $r $c
+fi
+
+
+
 if [ "$doinstall" = true ]; then
     get_disks
     touch "$working_dir"/.i_counter
@@ -728,7 +737,6 @@ case "$language" in
 	DSKFOUND="I dischi su cui lavorare trovati ammontano a:"
 	WGETERROR="Server non raggiungibile, i file locali non saranno aggiornati"
 	ERRORT="ERRORE"
-	#INSTERR="Il file di installazione è mancante, installazione annullata. Provare ad aggiornare il file o controllare la connessione ad Internet"
 	INSTERR="L'installazion è disabilitata, per favore abilitarla dal menù delle opzioni avanzate"
 	CFM="Scegliere il metodo di formattazione"
 	CF="Scegliere quale metodo di formattazione si vuole usare"
@@ -746,7 +754,7 @@ case "$language" in
 	REM="Rimuovere anche la cartella $working_dir e il suo contenuto?"
 	TitleEnInst="Abilita installazione"
 	EnInst="Abilitare l'installazione?"
-	
+	INSTERRFI="Il file di installazione è mancante, installazione annullata. Provare ad aggiornare il file o controllare la connessione ad Internet, l'installazione attuale verrà annullata"
 	 ;;
 				
 	*) #set EN
@@ -795,6 +803,7 @@ case "$language" in
 	REM="Delete also the folder $working_dir and its contents?"
 	TitleEnInst="Enable install"
 	EnInst="Enable installing feature?"
+    INSTERRFI="Installation file is missing, the installation is aborted. try to update the file or check your Internet connection, the installation will be aborted"
 	 ;;
 esac
 
