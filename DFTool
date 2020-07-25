@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.651
+version=0.652
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -241,10 +241,10 @@ function formatta ()
             #echo "sudo badblocks -fwsv /dev/$i >> log_$i" >> "$local_bin"/.tmp_"$i" 
 	    
 	        #TO BE TESTED:
-	        #echo "sudo badblocks -fwsv /dev/$i -o $local_log/log_$i" >> "$local_bin"/.tmp_"$i" 
+	        echo "sudo badblocks -fwsv /dev/$i -o $local_log/log_$i" >> "$local_bin"/.tmp_"$i" 
 	    
     	    #DD with another 0 pattern
-            #echo "dd if=/dev/zero of=/dev/$i status=progress" >> "$local_bin"/.tmp_"$i"
+            echo "dd if=/dev/zero of=/dev/$i status=progress" >> "$local_bin"/.tmp_"$i"
         
         fi
         
@@ -875,6 +875,7 @@ case "$W" in
         	       reopenDFTool ;;
         	    6) wget $update_server -O /tmp/DFTool_tmp -T 30 -t 1 2>/dev/null
         	       sudo mv -f /tmp/DFTool_tmp "$binary_location"/DFTool
+		       sudo chmod 775 "$binary_location"/DFTool
         	       reopenDFTool ;;
         	    7) rm $binary_location/DFTool
         	       if (whiptail  --title "$REMT" --yesno "$PCShutdown" $r $c ); then
