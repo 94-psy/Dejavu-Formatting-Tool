@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.655
+version=0.656
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
