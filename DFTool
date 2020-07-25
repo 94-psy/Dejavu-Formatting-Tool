@@ -1,4 +1,603 @@
-if [[ "$doinstall" = true ]]; then
+#!/bin/bash
+version=0.65
+
+if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
+
+
+binary_location="/usr/bin"
+updateconf=0
+
+if [ -f "$binary_location/DFTool" ]; then
+    IsInstalled=1
+    else
+    IsInstalled=0
+fi
+
+
+if [[ $EUID -ne 0 ]];
+then
+if [[ $IsInstalled -eq 1 ]]; then
+    exec sudo DFTool
+    else
+    exec sudo ./DFTool
+fi
+     
+fi
+
+
+##VARIABLES #1
+
+# Find the rows and columns will default to 80x24 is it can not be detected
+home=$(eval echo "~$user") 
+screen_size=$(stty size 2>/dev/null || echo 24 80) 
+rows=$(echo $screen_size | awk '{print $1}')
+columns=$(echo $screen_size | awk '{print $2}')
+
+# Definisco le dimensioni dell'interfaccia:
+r=$(( rows / 2 ))
+c=$(( columns / 2 ))
+# e nel caso in cui lo schermo sia piccolo
+r=$(( r < 20 ? 20 : r ))
+c=$(( c < 70 ? 70 : c ))
+
+declare -a partitions=()
+turnoff=true
+
+titolo="Dejavu Formatting Tool"
+working_dir="$home/.Dejavu"
+local_bin="$working_dir/bin"
+local_log="$working_dir/log"
+conf_file="$working_dir/configuration.conf"
+fcheck=0
+
+if [ -f "$working_dir" ]; then
+    echo "Working directory is OK"
+   else
+   mkdir -p $working_dir
+fi
+
+
+
+
+
+
+
+########################FUNCTIONS########################
+
+function dipendenze ()
+
+{
+    {
+        echo "\Installing nwipe.."
+        sudo apt install nwipe -y 2>/dev/null
+        echo 33
+        echo "\Installing smartmontools.."
+        sudo apt install smartmontools -y 2>/dev/null
+        echo 67
+        echo "\Installing sensible-utils.."
+        sudo apt install sensible-utils -y 2>/dev/null
+        echo 100
+        
+    } |whiptail --title "$titolo" --gauge "$Dependency" $r $c 0
+}
+
+
+function create_config_file ()
+{
+    rm $conf_file
+    touch $conf_file
+
+    whiptail --title "Missing Config File" --msgbox "The configurration file is missing, now we will create a new one. Please answer the short questions" $r $c 
+    
+    #decide if set the installation or not
+    if (whiptail  --title "Enable install" --yesno "Enable installing feature?" $r $c ); then
+        #set server addr
+        SETTINGS=$(whiptail --inputbox "What is the Server address of the file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
+        echo "SERVER_ADDR=$SETTINGS" >> $conf_file
+        #set server checksum addr
+        SETTINGS=$(whiptail --inputbox "What is the Server address of the checksum file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
+        echo "FILE_CHECK_DEST=$SETTINGS" >> $conf_file
+        #set iso file name
+        SETTINGS=$(whiptail --inputbox "What is the name of the file that has to be retrieved? (I.E. my_file.iso or my_file.img)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3) 
+        echo "FILE_NAME=$SETTINGS" >> $conf_file
+        #set checksum file name
+        SETTINGS=$(whiptail --inputbox "What is the name of the checksum file that has to be retrieved? (I.E. my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
+        echo "FILE_CHECK_NAME=$SETTINGS" >> $conf_file
+        echo "DO_INSTALL=1" >> $conf_file
+        doinstall=1
+    else
+        doinstall=0
+        echo "DO_INSTALL=0" >> $conf_file
+    fi
+   
+    #set formatting method
+    SETTINGS=$(whiptail --title "Configuration file" --radiolist \
+    "Choose default formatting"  $r $c 4 \
+    "D" "Badblocks and DD, 5 pattern (default)" ON \
+    "G" "Gutmann method, 35 pattern" OFF \
+    "N" "Ask every time" OFF 3>&1 1>&2 2>&3)
+    echo "FORM=$SETTINGS" >> $conf_file
+    #set language
+    SETTINGS=$(whiptail --title "Configuration file" --radiolist \
+    "Choose user's language"  $r $c 4 \
+    "EN" "English (default)" ON \
+    "IT" "Italian" OFF 3>&1 1>&2 2>&3) 
+    echo "LAN=$SETTINGS" >> $conf_file
+    #check dependency
+    dipendenze
+    echo "DEP=OK" >> $conf_file
+    #set debug    
+    echo "DEBUG=OFF" >> $conf_file
+    sudo chmod 775 $conf_file
+}
+
+
+function update_config ()
+{
+    mv $conf_file "$conf_file.old" 
+    touch $conf_file
+    echo "DO_INSTALL=$doinstall" >> $conf_file
+    if [ "$doinstall" = true ]; then
+        echo "SERVER_ADDR=$server" >> $conf_file
+        echo "FILE_NAME=$file_name" >> $conf_file
+        echo "FILE_CHECK_NAME=$local_check_name" >> $conf_file
+        echo "FILE_CHECK_DEST=$server_check" >> $conf_file
+    fi
+    echo "LAN=$language" >> $conf_file
+    echo "DEP=$dep" >> $conf_file
+    echo "FORM=$def_formatting" >> $conf_file
+    echo "DEBUG=$debug_mode" >> $conf_file
+    sudo chmod 775 $conf_file
+
+        
+}
+
+
+function update_DFTool ()
+{
+#download from github the latest and move to $binary_location
+
+wget $update_server -O /tmp/DFTool_tmp -T 30 -t 1 2>/dev/null
+nversion=$( sed -n '2p' /tmp/DFTool_tmp | tr -d version= )
+if [ "$version" = "$nvefrsion" ] ; then #update only when the version is different --> i want to have alway the latest available version (also one modified manualli with a higher version will be replaced)
+    echo "Already Update"
+    whiptail --title "$UPDFT" --msgbox "$UPDOK" $r $c
+else
+    echo "Updating.."
+    chmod +x /tmp/DFTool_tmp
+    sudo mv -f /tmp/DFTool_tmp "$binary_location"/DFTool
+    whiptail --title "$UPDFT" --msgbox "$UPNO" $r $c
+fi
+}
+
+
+
+function prepara_file ()
+{
+    file="$home/.tmp_part.txt"
+    mkdir -p $working_dir
+    mkdir -p $local_bin
+    mkdir -p $local_log
+    sudo chmod 777 --recursive $working_dir
+    sudo chmod 777 --recursive $local_bin
+    sudo chmod 777 --recursive $local_log
+    rm -rf .counter
+    rm -rf '$file'
+    touch '$file'
+    
+}
+
+
+function get_disks ()
+{
+    index=0
+    indexi=0
+    total_disks=0
+    disks_list=()
+    prepara_file
+    sudo lsblk -io KNAME,TYPE,MOUNTPOINT  >> '$file' 
+
+    while read name dsk_type mounting_point 
+    do
+        if [ "$mounting_point" == "/" ] ;
+        then
+            to_avoid=$name
+        fi
+    done < '$file' 
+    dsk_type="${to_avoid::-5}"
+    case "$dsk_type" in
+	    nvme)	to_avoid="${to_avoid::-2}" ;;
+	    *) to_avoid="${to_avoid::-1}";;	
+    esac
+
+    while read name dsk_type mounting_point 
+    do
+        if [ "$dsk_type" == "disk" -a "$to_avoid" != "$name" ] ;
+        then
+            disks_list+=("$name")
+        fi
+    done < '$file'
+    for i in ${disks_list[@]}; do
+        (( total_disks += 1))
+    done
+    echo "$DSKFOUND $total_disks"
+}
+
+
+########################CLASSICAL FORMATTING METHOD########################
+function formatta ()
+{
+    touch "$working_dir"/.counter
+    for i in ${disks_list[@]};
+    do
+        rm "$local_log"/log_"$i" 2>/dev/null
+        rm -rf "$local_bin"/.tmp_"$i" 2>/dev/null
+        echo "$StartDSK/$i"
+        echo "echo '$StartDSK/$i'" >> "$local_bin"/.tmp_"$i"
+       
+       if [[ "$debug_mode" = "OFF" ]]; then
+            echo ""
+            #badblocks part, 4 destructive pattern
+            #echo "sudo badblocks -fwsv /dev/$i >> log_$i" >> "$local_bin"/.tmp_"$i" 
+	    
+	        #TO BE TESTED:
+	        #echo "sudo badblocks -fwsv /dev/$i -o $local_log/log_$i" >> "$local_bin"/.tmp_"$i" 
+	    
+    	    #DD with another 0 pattern
+            #echo "dd if=/dev/zero of=/dev/$i status=progress" >> "$local_bin"/.tmp_"$i"
+        
+        fi
+        
+        echo "echo '1' >> $working_dir/.counter" >> "$local_bin"/.tmp_"$i"
+        echo "rm $local_bin/.tmp_$i" >> "$local_bin"/.tmp_"$i"
+        echo "exit 0" >> "$local_bin"/.tmp_"$i"
+        chmod +x "$local_bin"/.tmp_"$i"
+        sudo x-terminal-emulator -e "$local_bin/.tmp_$i" & 
+    done
+    rm -rf '$file'
+    
+    while [ $index -lt ${#disks_list[@]} ];do
+        index=0
+        
+        while read contatore 
+        do
+          #echo $dsk_type	#debug
+            (( index += $contatore))
+        done < "$working_dir/.counter" 
+	echo $(( $index * 100 / $total_disks )) | dialog --title "$titolo" --gauge "$FormattingProgress" $r $c 0
+	
+	if [[ $index -ge $total_disks ]]; then
+	    sleep 1
+	else
+	sleep $waiting_time
+	fi
+	 
+	done
+	
+	clear
+    
+    #LOGGING INFO DA TESTARE
+    for i in ${disks_list[@]};
+    do
+    
+    if [ -s "$local_log"/log_"$i" ] 
+    then
+    	#echo "$_file has some data."	#debug
+        smartctl -i /dev/"$i" >> "$local_log"/log_"$i" 
+    else
+    	#echo "$_file is empty."	#debug
+        rm "$local_log"/log_"$i" 2>/dev/null     
+    fi
+    
+    done
+    
+    
+    rm -rf "$working_dir/".counter 2>/dev/null
+}
+    
+
+########################GUTMANN FORMATTING METHOD########################
+function formattag ()
+{
+    for i in ${disks_list[@]};
+    do
+        rm "$local_log"/log_"$i" 2>/dev/null
+        rm -rf "$local_bin"/.tmp_"$i"
+        echo "$StartDSK/$i"
+        echo "echo '$StartDSK/$i'" >> "$local_bin"/.tmp_"$i"
+
+        if [[ "$debug_mode" = "OFF" ]]; then
+        echo ""
+	        #Gutmann method
+            #echo "sudo nwipe --autonuke --logfile=log_$i --method=gutmann /dev/$i " >> "$local_bin"/.tmp_"$i"
+	    fi
+	    
+        echo "echo '1' >> $working_dir/.counter" >> "$local_bin"/.tmp_"$i"
+        echo "rm $local_bin/.tmp_$i" >> "$local_bin"/.tmp_"$i"
+        echo "exit 0" >> "$local_bin"/.tmp_"$i"
+        chmod +x "$local_bin"/.tmp_"$i"
+        sudo x-terminal-emulator -e "$local_bin/.tmp_$i" &
+
+    done
+    rm -rf '$file'
+    
+    while [ $index -lt ${#disks_list[@]} ];do
+        index=0
+        
+        while read contatore 
+        do
+          #echo $dsk_type	#debug
+            (( index += $contatore))
+        done < "$working_dir/.counter" 
+	echo $(( $index * 100 / $total_disks )) | dialog --title "$titolo" --gauge "$FormattingProgressG" $r $c 0
+	
+	if [[ $index -ge $total_disks ]]; then
+	    sleep 1
+	else
+	    sleep $waiting_time
+	fi
+	 
+	done
+	clear
+	
+    #LOGGING INFO  DA TESTARE
+    for i in ${disks_list[@]};
+    do
+    
+    if [ -s "$local_log"/log_"$i" ] 
+    then
+    	#echo "$_file has some data."	#debug
+        smartctl -i /dev/"$i" >> "$local_log"/log_"$i" 
+    else
+    	#echo "$_file is empty."	#debug
+        rm "$local_log"/log_"$i" 2>/dev/null     
+    fi
+    
+    done
+
+    rm -rf "$working_dir/".counter 2>/dev/null
+}
+
+
+function formatting ()
+{
+case "$def_formatting" in
+    D) formatta ;;
+    G) formattag ;;
+    *) 
+        FORMATTING=$(whiptail --title "$FTEXTM" --radiolist \
+        "$FTEXT"  $r $c 6 \
+        "1" "$F1" ON \
+        "2" "$F2" OFF 3>&1 1>&2 2>&3)
+        if [[ "$FORMATTING" -eq 2 ]]; then
+            formattag
+        else
+            formatta
+        fi ;;
+esac
+}
+
+
+
+function check_img_update () 
+
+{
+    if [[ "$doinstall" = true || $fcheck -eq 1 ]]; then
+        sudo rm -rf "$local_check_downloaded"	
+        fcheck=0
+        wget $server_check -O $local_check_downloaded -T 30 -t 1 2> /dev/null
+        exitstatus="$?"
+        
+        if [[ "$exitstatus" -eq 0 ]] ; then
+            #computing MD5 checksum
+            md5sum "$local_file" | awk '{ print $1}' > "$locale_check"
+    
+            md5_server=$(sudo head -n 1 "$local_check_downloaded") #md5sum just downloaded
+            md5_local=$(sudo head -n 1 "$locale_check") #md5sum already on local drive
+    
+            if [ "$md5_local" = "$md5_server" ] ; then
+                    echo "Update not necessary"
+    
+                else
+                    echo "Updating.."
+                    sudo mv "$local_check_downloaded" "$locale_check"
+                    sudo rm -rf $local_file 2>/dev/null
+        	        wget $server -O $local_file  2> /dev/null
+    
+            fi
+            sudo rm -rf $local_check_downloaded 2>/dev/null
+        else
+        whiptail --title "$ERRORT" --msgbox "$WGETERROR" $r $c
+        fi
+    fi
+}
+
+
+
+function enable_install () #
+
+{
+    if (whiptail  --title "$TitleEnInst" --yesno "$EnInst" $r $c ); then
+        doinstall=true
+        if [ "$doinstall" = true ]; then
+    
+        server=$( cat $conf_file | grep SERVER_ADDR= | tr -d SERVER_ADDR= ) #contains the  server destination of the file
+        while [ -z "$server" ]
+        do
+            #it's empty
+            updateconf=1
+            server=$(whiptail --inputbox "What is the Server address of the file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file)" $r $c --title "Configuration file incomplete" 3>&1 1>&2 2>&3)
+        done
+        
+        
+        file_name=$( cat $conf_file | grep FILE_NAME= | tr -d FILE_NAME= )  #contains the  local file name
+        while [ -z "$file_name" ]
+        do
+            #it's empty
+            updateconf=1
+            file_name=$(whiptail --inputbox "What is the name of the file that has to be retrieved? (I.E. my_file.iso or my_file.img)" $r $c --title "Configuration file incomplete" 3>&1 1>&2 2>&3)
+        done
+    
+    
+        server_check=$( cat $conf_file | grep FILE_CHECK_DEST= | tr -d FILE_CHECK_DEST= ) #contains the  server destination of the checksum
+        while [ -z "$server_check" ]
+        do
+            #it's empty
+            updateconf=1
+            server_check=$(whiptail --inputbox "What is the Server address of the checksum file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
+        done
+    
+    
+        local_check_name=$( cat $conf_file | grep FILE_CHECK_NAME= | tr -d FILE_CHECK_NAME= )
+        while [ -z "$local_check_name" ]
+        do
+            #it's empty
+            updateconf=1
+            local_check_name=$(whiptail --inputbox "What is the name of the checksum file that has to be retrieved? (I.E. my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file incomplete" 3>&1 1>&2 2>&3)
+        done
+    
+    fi
+    
+    else
+        doinstall=false
+    fi
+    
+    update_config
+}
+
+
+
+########################INSTALLING FUNCTION########################
+function installa ()
+
+{
+#if [ -f "$local_file" ]; then #in case of error (missing installation file) i can't install and i will print an error
+if [ "$doinstall" = true ]; then
+    get_disks
+    touch "$working_dir"/.i_counter
+    for i in ${disks_list[@]};
+    do
+        rm -rf "$local_bin"/.tmp_i_"$i" 2>/dev/null
+        echo "$StartDSK/$i"
+        echo "echo '$StartDSK/$i'" >> "$local_bin"/.tmp_i_"$i"
+      
+        if [[ "$debug_mode" = "OFF" ]]; then
+      echo ""
+            #Installing with DD
+            #echo "dd if=percorso_iso of=/dev/$i status=progress" >> "$local_bin"/.tmp_i_"$i"
+      
+        fi
+        
+        echo "echo '1' >> $working_dir/.i_counter" >> "$local_bin"/.tmp_i_"$i"
+        echo "rm $local_bin/.tmp_i_$i" >> "$local_bin"/.tmp_i_"$i"
+        echo "exit 0" >> "$local_bin"/.tmp_i_"$i"
+        chmod +x "$local_bin"/.tmp_i_"$i"
+        sudo x-terminal-emulator -e "$local_bin/.tmp_i_$i" &
+    done
+    rm -rf '$file'
+
+    while [ $index -lt ${#disks_list[@]} ];do
+        index=0
+        
+        while read contatore 
+        do
+            #echo $dsk_type	#debug
+            (( index += $contatore))
+        done < "$working_dir/.i_counter" 
+        echo $(( $index * 100 / $total_disks )) | dialog --title "$titolo" --gauge "$InstallingProgress" $r $c 0
+
+        if [[ $index -ge $total_disks ]]; then
+            sleep 1
+        else
+            sleep $waiting_time
+        fi
+	 
+    done
+    clear
+
+    rm -rf "$working_dir"/.i_counter 2>/dev/null 
+
+else
+
+    whiptail --title "$ERRORT" --msgbox "$INSTERR" $r $c
+fi
+
+}
+
+
+
+
+function spegnimento ()
+{
+    if (whiptail  --title "$titolo" --yesno "$PCShutdown" $r $c ); then
+        turnoff=true
+    
+    else
+        turnoff=false
+    fi
+}
+
+
+function spegni () 
+{
+if [ "$turnoff" = true ]; then
+    sudo poweroff
+else
+    reopenDFTool
+fi 
+}
+
+
+function reopenDFTool ()
+{
+sleep 1
+clear
+if [[ $IsInstalled -eq 1 ]] ; then
+   exec sudo DFTool
+   else
+   exec sudo ./DFTool
+fi
+}
+
+
+function choose_f ()
+{
+updateconf=1
+def_formatting=$(whiptail --title "$CFM" --radiolist \
+"$CF"  $r $c 4 \
+"D" "$F1" ON \
+"G" "$F2" OFF \
+"N" "$F3" OFF 3>&1 1>&2 2>&3)
+}
+
+
+
+########################SET THE OTHER VARIABLES########################
+########################and eventually add them########################
+if [ -f "$conf_file" ]; then
+    echo "Config file is OK"
+
+    else
+    create_config_file
+fi
+
+
+
+#Check if I have to install the system or not. if check also the server
+doinstall="$( cat $conf_file | grep DO_INSTALL= | tr -d DO_INSTALL= )"
+if [ -z "$doinstall" ]; then
+    #it's empty
+    updateconf=1
+    if (whiptail  --title "Enable install" --yesno "Enable installing feature?" $r $c ); then
+        doinstall=true 
+    else
+        doinstall=false 
+    fi
+fi
+
+
+
+if [ "$doinstall" = true ]; then
 
     server=$( cat $conf_file | grep SERVER_ADDR= | tr -d SERVER_ADDR= ) #contains the  server destination of the file
     while [ -z "$server" ]
@@ -36,3 +635,268 @@ if [[ "$doinstall" = true ]]; then
     done
     
 fi
+
+language=$( cat $conf_file | grep LAN= | tr -d LAN= )
+while [ -z "$language" ]
+do
+    #it's empty
+    updateconf=1
+    language=$(whiptail --title "Configuration file incomplete" --radiolist \
+    "Choose user's language"  $r $c 4 \
+    "EN" "English (default)" ON \
+    "IT" "Italian" OFF 3>&1 1>&2 2>&3)
+done
+
+def_formatting=$( cat $conf_file | grep FORM= | tr -d FORM= )
+while [ -z "$def_formatting" ]
+do
+    #it's empty
+    updateconf=1
+    def_formatting=$(whiptail --title "Configuration file" --radiolist \
+    "Choose default formatting"  $r $c 4 \
+    "D" "Badblocks and DD, 5 pattern (default)" ON \
+    "G" "Gutmann method, 35 pattern" OFF \
+    "N" "Ask every time" OFF 3>&1 1>&2 2>&3)
+done
+
+
+dep="$( cat $conf_file | grep DEP= | tr -d DEP= )"
+if [ -z "$dep" ]; then
+    #it's empty
+    updateconf=1
+    dipendenze
+    dep="OK"
+fi
+
+debug_mode="$( cat $conf_file | grep DEBUG= | tr -d DEBUG= )"
+if [ -z "$debug_mode" ]; then
+    #it's empty
+    updateconf=1
+    debug_mode="OFF" #Default is OFF
+
+    
+fi
+
+
+
+local_check_downloaded="$locale_check.new" #contains the  local position of the downloaded checksum file
+local_file="$working_dir/$file_name" #contains the  local position of the file
+locale_check="$working_dir/$local_check_name" #contains the  local position of the checksum file
+waiting_time=30 #check every 30 seconds
+update_server=https://raw.githubusercontent.com/94-psy/Dejavu-Formatting-Tool/master/DFTool
+total_disks=0
+
+#case "$dep" in
+#    OK) ;;
+#    *) dipendenze
+#       dep="OK" 
+#       update_config ;;
+#esac
+
+
+if [[ $updateconf -eq 1 ]] ; then
+    update_config
+    updateconf=0
+fi
+
+case "$language" in 
+	IT ) #set IT
+	MainMenu="Elenco delle principali funzionalità:"
+	SubMenu1="Formatta i dischi, installa il sistema e uscire dal programma"
+	SubMenu2="Formatta i dischi"
+	SubMenu3="Installa il sistema"
+	SubMenu4="Opzioni avanzate"
+	SubMenu5="Info - link utili"
+	ADV1="Aggiorna i file locali"
+	ADV2="Aggiorna ed installa il DFTool in $binary_location"
+	ADV3="Controlla le dipendenze"
+	ADV4="Cambia formattazione di default"
+	ADV5="Abilita/Disabilita installazione"
+	ADV6="Isinstalla il DFTool in $binary_location"
+	ADV7="Disinstalla il DFTool da $binary_location"
+	INFO1="Home page di Credere per Vedere"
+	INFO2="Home page del Progetto Dejavu"
+	INFO3="Pagina Facebook di Credere per Vedere"
+	INFO4="Pagina Facebook del Progetto Dejavu"
+	INFO5="Repository di GitHub"
+	StartDSK="Avvio il disco /dev"
+	FormattingProgress="Avanzamento formattazione di default..."
+	FormattingProgressG="Avanzamento formattazione con metodo Gutmann..."
+	InstallingProgress="Avanzamento installazione..."
+	PCShutdown="Spegnere il PC alla fine del processo?"
+	Dependency="Controllando le dipendenze"
+	DSKFOUND="I dischi su cui lavorare trovati ammontano a:"
+	WGETERROR="Server non raggiungibile, i file locali non saranno aggiornati"
+	ERRORT="ERRORE"
+	#INSTERR="Il file di installazione è mancante, installazione annullata. Provare ad aggiornare il file o controllare la connessione ad Internet"
+	INSTERR="L'installazion è disabilitata, per favore abilitarla dal menù delle opzioni avanzate"
+	CFM="Scegliere il metodo di formattazione"
+	CF="Scegliere quale metodo di formattazione si vuole usare"
+	FTEXTM="Scegliere il metodo di formattazione per questa sessione"
+	FTEXT="Scegliere quale metodo di formattazione si vuole usare"
+	F1="Badblocks e DD, 5 pattern in totale (default)"
+	F2="Metodo di Gutmann, 35 pattern in totale"
+	F3="Chiedere tutte le volte"
+	UPDFT="Aggiornamento DFTool"
+    UPDOK="Il Dejavu Formatting Tool è già all'ultima versione, premere OK per tornare al menu' principale"
+	UPNO="IL Dejavu Formatting Tool è ora aggiornato all'ultima versione, premere OK per tornare al menu' principale"
+    TLOG="LOG TROVATI"
+	ERRLOG="La cartella log non è vuota, ci potrebbero essere dei dischi difettosi. Chiudere il programma e controllare manualmente la cartella (attendere qualche istante)? In caso contrario i log saranno cancellati"
+	REMT="Disinstallazione"
+	REM="Rimuovere anche la cartella $working_dir e il suo contenuto?"
+	TitleEnInst="Abilita installazione"
+	EnInst="Abilitare l'installazione?"
+	
+	 ;;
+				
+	*) #set EN
+	MainMenu="List of main functions:"
+	SubMenu1="Formatting disks, installing OS, exiting program"
+	SubMenu2="Formatting disks"
+	SubMenu3="Installing OS"
+	SubMenu4="Advanced options"
+	SubMenu5="Info - useful links"
+	ADV1="Update local files"
+	ADV2="Update and install the DFTool in $binary_location"
+	ADV3="Check dependency"
+	ADV4="Change default formatting method"
+	ADV5="Enable/disable installing"
+    ADV6="Install the DFTool in $binary_location"
+	ADV7="Uninstall from $binary_location the DFTool"
+	INFO1="Home page of Credere per Cedere"
+	INFO2="Home page of Dejavu Project"
+	INFO3="Facebook page of Credere per Veder"
+	INFO4="Facebook page of Dejavu Project"
+	INFO5="GitHub repository"
+	StartDSK="Starting disk /dev"
+	FormattingProgress="Default formatting in progress..."
+	FormattingProgressG="Gutmann's method formatting in progress..."
+	InstallingProgress="Installing progress..."
+	PCShutdown="Turn off the PC at the end of the process?"
+	Dependency="Checking dependecies"
+	DSKFOUND="The total number of disks where is possible to work on is:"
+	WGETERROR="Server unreachable, local files won't be updated"
+	ERRORT="ERROR"
+#	INSTERR="Installation file is missing, the installation is aborted. try to update the file or check your Internet connection"
+    INSTERR="Installation is disable from settings, please enable it in advanced options"
+	CFM="Choose the formatting method"
+	CF="Choose which formatting method you want to use"
+    FTEXTM="Choose the formatting method for this session"
+    FTEXT="Choose which formatting method you want to use"
+	F1="Badblocks and DD, a total of 5 pattern (default)"
+	F2="Gutmann method, a total of 35 pattern"
+	F3="Ask every time"
+	UPDFT="DFTool Updating"
+	UPDOK="The Dejavu Formatting Tool is already up to date, press OK to return to main menu"
+	UPNO="The Dejavu Formatting Tool is now at last version, press OK to return to main menu"
+	TLOG="LOG FOUND"
+	ERRLOG="The log folder is no empy, maybe there was some bad disks. Would you like to quit and manually check the log folder (wait some moments)? If no logs will be deleted"
+    REMT="Uninstalling"
+	REM="Delete also the folder $working_dir and its contents?"
+	TitleEnInst="Enable install"
+	EnInst="Enable installing feature?"
+	 ;;
+esac
+
+
+
+
+##inizio prorgamma##
+
+clear
+
+
+if [ "$(ls -A $local_log)" ]; then #if true is not empty --> some logs in
+    if (whiptail  --title "$TLOG" --yesno "$ERRLOG" $r $c ); then
+        sudo -u $user xdg-open $local_log &
+        exit 3
+    else
+        rm -rf $local_log
+        mkdir -p $local_log
+        sudo chmod 777 --recursive $local_log
+    fi
+fi
+
+
+clear
+W=$(whiptail --title "Menu $titolo $version" --menu "$MainMenu" $r $c 6 \
+	"1" "$SubMenu1" \
+	"2" "$SubMenu2" \
+	"3" "$SubMenu3" \
+	"4" "$SubMenu4" \
+	"5" "$SubMenu5" 3>&1 1>&2 2>&3)
+
+case "$W" in 
+	1)	spegnimento
+		get_disks 
+		check_img_update & clear
+		formatting
+		installa 
+		spegni ;;
+	2)	spegnimento
+		get_disks
+		formatting
+		spegni ;;
+	3)	spegnimento
+		check_img_update
+		installa
+		spegni ;;
+	4)  
+	    Z=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 6 \
+        	"1" "$ADV1" \
+        	"2" "$ADV2" \
+        	"3" "$ADV3" \
+        	"4" "$ADV4" \
+        	"5" "$ADV5" \
+        	"6" "$ADV6" \
+        	"7" "$ADV7"  3>&1 1>&2 2>&3)
+        	case "$Z" in 
+        	    1) fcheck=1
+        	       check_img_update
+        	       reopenDFTool ;;
+        	    2) update_DFTool
+        	       reopenDFTool ;;
+        	    3) dipendenze
+                   dep="OK" 
+                   update_config
+                   reopenDFTool ;;
+        	    4) choose_f
+        	       update_config
+        	       reopenDFTool ;;
+        	    5) enable_install
+        	       reopenDFTool ;;
+        	    6) wget $update_server -O /tmp/DFTool_tmp -T 30 -t 1 2>/dev/null
+        	       sudo mv -f /tmp/DFTool_tmp "$binary_location"/DFTool
+        	       reopenDFTool ;;
+        	    7) rm $binary_location/DFTool
+        	       if (whiptail  --title "$REMT" --yesno "$PCShutdown" $r $c ); then
+                       rm -rf $working_dir
+        	       fi
+        	       reopenDFTool ;;
+        	    *) reopenDFTool;;
+        	esac ;;
+	5)  
+	        Y=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 6 \
+        	"1" "$INFO1" \
+        	"2" "$INFO2" \
+        	"3" "$INFO3" \
+        	"4" "$INFO4" \
+        	"5" "$INFO5" 3>&1 1>&2 2>&3)
+        	case "$Y" in 
+        	    1) su - $user sensible-browser http://www.crederepervedere.org/ &
+        	       reopenDFTool ;;
+        	    2) su - $user sensible-browser https://progettodejavu.blogspot.com/ &
+        	       reopenDFTool ;;
+        	    3) su - $user sensible-browser https://www.facebook.com/crederepervedereonlus/ &
+        	       reopenDFTool ;;
+        	    4) su - $user sensible-browser https://www.facebook.com/progettodejavu/ &
+        	       reopenDFTool ;;
+        	    5) su - $user sensible-browser https://github.com/94-psy/Dejavu-Formatting-Tool &
+        	       reopenDFTool ;;
+        	    *) reopenDFTool ;;
+        	esac ;;			
+	*) exit 1 ;;
+esac
+
+
+exit 0
