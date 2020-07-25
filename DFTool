@@ -9,7 +9,7 @@ updateconf=0
 
 if [ -f "$binary_location/DFTool" ]; then
     IsInstalled=1
-    else
+else
     IsInstalled=0
 fi
 
@@ -18,7 +18,7 @@ if [[ $EUID -ne 0 ]];
 then
 if [[ $IsInstalled -eq 1 ]]; then
     exec sudo DFTool
-    else
+else
     exec sudo ./DFTool
 fi
      
@@ -482,7 +482,7 @@ if [ "$doinstall" = true ]; then
         echo "echo '$StartDSK/$i'" >> "$local_bin"/.tmp_i_"$i"
       
         if [[ "$debug_mode" = "OFF" ]]; then
-      echo ""
+	    echo ""
             #Installing with DD
             #echo "dd if=percorso_iso of=/dev/$i status=progress" >> "$local_bin"/.tmp_i_"$i"
       
@@ -554,7 +554,7 @@ sleep 1
 clear
 if [[ $IsInstalled -eq 1 ]] ; then
    exec sudo DFTool
-   else
+else
    exec sudo ./DFTool
 fi
 }
@@ -577,7 +577,7 @@ def_formatting=$(whiptail --title "$CFM" --radiolist \
 if [ -f "$conf_file" ]; then
     echo "Config file is OK"
 
-    else
+else
     create_config_file
 fi
 
@@ -738,9 +738,9 @@ case "$language" in
 	F2="Metodo di Gutmann, 35 pattern in totale"
 	F3="Chiedere tutte le volte"
 	UPDFT="Aggiornamento DFTool"
-    UPDOK="Il Dejavu Formatting Tool è già all'ultima versione, premere OK per tornare al menu' principale"
+	UPDOK="Il Dejavu Formatting Tool è già all'ultima versione, premere OK per tornare al menu' principale"
 	UPNO="IL Dejavu Formatting Tool è ora aggiornato all'ultima versione, premere OK per tornare al menu' principale"
-    TLOG="LOG TROVATI"
+	TLOG="LOG TROVATI"
 	ERRLOG="La cartella log non è vuota, ci potrebbero essere dei dischi difettosi. Chiudere il programma e controllare manualmente la cartella (attendere qualche istante)? In caso contrario i log saranno cancellati"
 	REMT="Disinstallazione"
 	REM="Rimuovere anche la cartella $working_dir e il suo contenuto?"
@@ -761,7 +761,7 @@ case "$language" in
 	ADV3="Check dependency"
 	ADV4="Change default formatting method"
 	ADV5="Enable/disable installing"
-    ADV6="Install the DFTool in $binary_location"
+	ADV6="Install the DFTool in $binary_location"
 	ADV7="Uninstall from $binary_location the DFTool"
 	INFO1="Home page of Credere per Cedere"
 	INFO2="Home page of Dejavu Project"
@@ -778,11 +778,11 @@ case "$language" in
 	WGETERROR="Server unreachable, local files won't be updated"
 	ERRORT="ERROR"
 #	INSTERR="Installation file is missing, the installation is aborted. try to update the file or check your Internet connection"
-    INSTERR="Installation is disable from settings, please enable it in advanced options"
+	INSTERR="Installation is disable from settings, please enable it in advanced options"
 	CFM="Choose the formatting method"
 	CF="Choose which formatting method you want to use"
-    FTEXTM="Choose the formatting method for this session"
-    FTEXT="Choose which formatting method you want to use"
+	FTEXTM="Choose the formatting method for this session"
+	FTEXT="Choose which formatting method you want to use"
 	F1="Badblocks and DD, a total of 5 pattern (default)"
 	F2="Gutmann method, a total of 35 pattern"
 	F3="Ask every time"
@@ -791,7 +791,7 @@ case "$language" in
 	UPNO="The Dejavu Formatting Tool is now at last version, press OK to return to main menu"
 	TLOG="LOG FOUND"
 	ERRLOG="The log folder is no empy, maybe there was some bad disks. Would you like to quit and manually check the log folder (wait some moments)? If no logs will be deleted"
-    REMT="Uninstalling"
+	REMT="Uninstalling"
 	REM="Delete also the folder $working_dir and its contents?"
 	TitleEnInst="Enable install"
 	EnInst="Enable installing feature?"
@@ -842,7 +842,7 @@ case "$W" in
 		installa
 		spegni ;;
 	4)  
-	    Z=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 6 \
+	    Z=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 10 \
         	"1" "$ADV1" \
         	"2" "$ADV2" \
         	"3" "$ADV3" \
@@ -876,7 +876,7 @@ case "$W" in
         	    *) reopenDFTool;;
         	esac ;;
 	5)  
-	        Y=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 6 \
+	        Y=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 10 \
         	"1" "$INFO1" \
         	"2" "$INFO2" \
         	"3" "$INFO3" \
