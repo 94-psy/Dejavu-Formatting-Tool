@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.65
+version=0.651
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -785,7 +785,6 @@ case "$language" in
 	DSKFOUND="The total number of disks where is possible to work on is:"
 	WGETERROR="Server unreachable, local files won't be updated"
 	ERRORT="ERROR"
-#	INSTERR="Installation file is missing, the installation is aborted. try to update the file or check your Internet connection"
 	INSTERR="Installation is disable from settings, please enable it in advanced options"
 	CFM="Choose the formatting method"
 	CF="Choose which formatting method you want to use"
@@ -803,7 +802,7 @@ case "$language" in
 	REM="Delete also the folder $working_dir and its contents?"
 	TitleEnInst="Enable install"
 	EnInst="Enable installing feature?"
-    INSTERRFI="Installation file is missing, the installation is aborted. try to update the file or check your Internet connection, the installation will be aborted"
+	INSTERRFI="Installation file is missing, the installation is aborted. try to update the file or check your Internet connection, the installation will be aborted"
 	 ;;
 esac
 
