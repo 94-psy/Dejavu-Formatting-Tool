@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.656
+version=0.657
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -59,15 +59,13 @@ fi
 
 
 
-
-
-
 ########################FUNCTIONS########################
 
 function dipendenze ()
 
 {
     #{
+    	sudo apt update
         echo "\Installing nwipe.."
         sudo apt install nwipe -y #2>/dev/null
         #echo 33
@@ -489,7 +487,7 @@ if [ "$doinstall" = true ]; then
         if [[ "$debug_mode" = "OFF" ]]; then
 	    echo ""
             #Installing with DD
-            #echo "dd if=percorso_iso of=/dev/$i status=progress" >> "$local_bin"/.tmp_i_"$i"
+            echo "dd if=percorso_iso of=/dev/$i status=progress" >> "$local_bin"/.tmp_i_"$i"
       
         fi
         
