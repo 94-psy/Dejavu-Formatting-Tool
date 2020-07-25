@@ -67,18 +67,18 @@ fi
 function dipendenze ()
 
 {
-    {
+    #{
         echo "\Installing nwipe.."
-        sudo apt install nwipe -y 2>/dev/null
-        echo 33
+        sudo apt install nwipe -y #2>/dev/null
+        #echo 33
         echo "\Installing smartmontools.."
-        sudo apt install smartmontools -y 2>/dev/null
-        echo 67
+        sudo apt install smartmontools -y #2>/dev/null
+        #echo 67
         echo "\Installing sensible-utils.."
-        sudo apt install sensible-utils -y 2>/dev/null
-        echo 100
+        sudo apt install sensible-utils -y #2>/dev/null
+        #echo 100
         
-    } |whiptail --title "$titolo" --gauge "$Dependency" $r $c 0
+    #} |whiptail --title "$titolo" --gauge "$Dependency" $r $c 0
 }
 
 
