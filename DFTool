@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.652
+version=0.653
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -892,15 +892,15 @@ case "$W" in
         	"4" "$INFO4" \
         	"5" "$INFO5" 3>&1 1>&2 2>&3)
         	case "$Y" in 
-        	    1) su - $user sensible-browser http://www.crederepervedere.org/ &
+        	    1) su - $user sensible-browser http://www.crederepervedere.org/ 2> /dev/null &
         	       reopenDFTool ;;
-        	    2) su - $user sensible-browser https://progettodejavu.blogspot.com/ &
+        	    2) su - $user sensible-browser https://progettodejavu.blogspot.com/ 2> /dev/null &
         	       reopenDFTool ;;
-        	    3) su - $user sensible-browser https://www.facebook.com/crederepervedereonlus/ &
+        	    3) su - $user sensible-browser https://www.facebook.com/crederepervedereonlus/ 2> /dev/null &
         	       reopenDFTool ;;
-        	    4) su - $user sensible-browser https://www.facebook.com/progettodejavu/ &
+        	    4) su - $user sensible-browser https://www.facebook.com/progettodejavu/ 2> /dev/null &
         	       reopenDFTool ;;
-        	    5) su - $user sensible-browser https://github.com/94-psy/Dejavu-Formatting-Tool &
+        	    5) su - $user sensible-browser https://github.com/94-psy/Dejavu-Formatting-Tool 2> /dev/null &
         	       reopenDFTool ;;
         	    *) reopenDFTool ;;
         	esac ;;			
