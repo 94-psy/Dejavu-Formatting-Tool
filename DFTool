@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.658
+version=0.6581
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -54,6 +54,7 @@ URL2="https://progettodejavu.blogspot.com/"
 URL3="https://www.facebook.com/crederepervedereonlus/"
 URL4="https://www.facebook.com/progettodejavu/"
 URL5="https://github.com/94-psy/Dejavu-Formatting-Tool"
+$minimum_space=80
 
 if [ -f "$working_dir" ]; then
     echo "Working directory is OK"
@@ -112,7 +113,13 @@ function create_config_file ()
         doinstall=0
         echo "DO_INSTALL=0" >> $conf_file
     fi
-   
+    #set iteration number
+    SETTINGS=$(whiptail --inputbox "How mamny times do you want to iterate the formatting method? ( DEFAULT = 1 ) " $r $c --title "Configuration file" 3>&1 1>&2 2>&3) 
+    if [[ $SETTINGS -ge 1 ]]; then
+        echo "ITER_NUMER=$SETTINGS" >> $conf_file
+    else
+        echo "ITER_NUMER=1" >> $conf_file
+    fi
     #set formatting method
     SETTINGS=$(whiptail --title "Configuration file" --radiolist \
     "Choose default formatting"  $r $c 4 \
@@ -146,6 +153,7 @@ function update_config ()
         echo "FILE_CHECK_NAME=$local_check_name" >> $conf_file
         echo "FILE_CHECK_DEST=$server_check" >> $conf_file
     fi
+    echo "ITER_NUMER=$iteration" >> $conf_file
     echo "LAN=$language" >> $conf_file
     echo "DEP=$dep" >> $conf_file
     echo "FORM=$def_formatting" >> $conf_file
@@ -230,6 +238,11 @@ function get_disks ()
 ########################CLASSICAL FORMATTING METHOD########################
 function formatta ()
 {
+if (whiptail  --title "$titleF" --yesno "$ASKF" $r $c ); then
+        
+    
+    
+    
     touch "$working_dir"/.counter
     for i in ${disks_list[@]};
     do
@@ -237,16 +250,18 @@ function formatta ()
         rm -rf "$local_bin"/.tmp_"$i" 2>/dev/null
         echo "$StartDSK/$i"
         echo "echo '$StartDSK/$i'" >> "$local_bin"/.tmp_"$i"
-       
-       if [[ "$debug_mode" = "OFF" ]]; then
-            echo ""
-            #badblocks part, 4 destructive pattern
-	    echo "sudo badblocks -fwsv /dev/$i -o $local_log/log_$i" >> "$local_bin"/.tmp_"$i" 
-    	    #DD with another 0 pattern
-            echo "dd if=/dev/zero of=/dev/$i status=progress" >> "$local_bin"/.tmp_"$i"
         
-        fi
+        for ii in {0..$iteration..1}
+        do
+            if [[ "$debug_mode" = "OFF" ]]; then
+                echo ""
+                #badblocks part, 4 destructive pattern
+	            echo "sudo badblocks -fwsv /dev/$i -o $local_log/log_$i" >> "$local_bin"/.tmp_"$i" 
+    	        #DD with another 0 pattern
+                echo "dd if=/dev/zero of=/dev/$i status=progress" >> "$local_bin"/.tmp_"$i"
         
+            fi
+        done
         echo "echo '1' >> $working_dir/.counter" >> "$local_bin"/.tmp_"$i"
         echo "rm $local_bin/.tmp_$i" >> "$local_bin"/.tmp_"$i"
         echo "exit 0" >> "$local_bin"/.tmp_"$i"
@@ -275,7 +290,7 @@ function formatta ()
 	
 	clear
     
-    #LOGGING INFO DA TESTARE
+
     for i in ${disks_list[@]};
     do
     
@@ -292,12 +307,19 @@ function formatta ()
     
     
     rm -rf "$working_dir/".counter 2>/dev/null
+    
+else
+    whiptail --title "$ERRORT" --msgbox "$ABORTEDF" $r $c
+fi
 }
     
 
 ########################GUTMANN FORMATTING METHOD########################
 function formattag ()
 {
+if (whiptail  --title "$titleF" --yesno "$ASKF" $r $c ); then
+
+    
     for i in ${disks_list[@]};
     do
         rm "$local_log"/log_"$i" 2>/dev/null
@@ -308,7 +330,7 @@ function formattag ()
         if [[ "$debug_mode" = "OFF" ]]; then
         echo ""
 	    #Gutmann method
-            echo "sudo nwipe --autonuke --logfile=$local_log/log_$i --method=gutmann /dev/$i --nowait" >> "$local_bin"/.tmp_"$i"
+            echo "sudo nwipe --autonuke --logfile=$local_log/log_$i --method=gutmann /dev/$i --nowait -r $iteration" >> "$local_bin"/.tmp_"$i"
 	    fi
 	    
         echo "echo '1' >> $working_dir/.counter" >> "$local_bin"/.tmp_"$i"
@@ -339,7 +361,7 @@ function formattag ()
 	done
 	clear
 	
-    #LOGGING INFO  DA TESTARE
+
     for i in ${disks_list[@]};
     do
     
@@ -355,6 +377,10 @@ function formattag ()
     done
 
     rm -rf "$working_dir/".counter 2>/dev/null
+
+else
+    whiptail --title "$ERRORT" --msgbox "$ABORTEDF" $r $c
+fi
 }
 
 
@@ -644,6 +670,15 @@ if [ "$doinstall" = true ]; then
     
 fi
 
+
+iteration=$( cat $conf_file | grep ITER_NUMER= | tr -d ITER_NUMER= )
+if [ -z $iteration ]; then
+    iteration=$(whiptail --inputbox "How mamny times do you want to iterate the formatting method? ( DEFAULT = 1 ) " $r $c --title "Configuration file" 3>&1 1>&2 2>&3) 
+    if [[ $iteration -le 1 ]]; then
+        iteration=1
+    fi
+fi
+
 language=$( cat $conf_file | grep LAN= | tr -d LAN= )
 while [ -z "$language" ]
 do
@@ -722,6 +757,7 @@ case "$language" in
 	ADV5="Abilita/Disabilita installazione"
 	ADV6="Isinstalla il DFTool in $binary_location"
 	ADV7="Disinstalla il DFTool da $binary_location"
+	ADV8="Imposta il numero di iterazioni del metodo di formattazione scelto"
 	INFO1="Home page di Credere per Vedere"
 	INFO2="Home page del Progetto Dejavu"
 	INFO3="Pagina Facebook di Credere per Vedere"
@@ -754,6 +790,12 @@ case "$language" in
 	TitleEnInst="Abilita installazione"
 	EnInst="Abilitare l'installazione?"
 	INSTERRFI="Il file di installazione è mancante, installazione annullata. Provare ad aggiornare il file o controllare la connessione ad Internet, l'installazione attuale verrà annullata"
+	ITTITLE="Quante volte si vuole iterare il metodo di formattazione scelto? ( DEFAUL = 1 )"
+	titleF="ATTENZIONE"
+	ASKF="Il Tool formatterà tutti i dischi tranne quello su cui è montata /. Si desidera proseguire?"
+	ABORTEDF="Formattazione annullata"
+	INFOT="INFORMAZIONE"
+	ALLERTINST="Le partizioni sono da ampliare manualmente a fine processo. Il disco deve essere da almeno $minimum_space GB per completare l'installazione"
 	 ;;
 				
 	*) #set EN
@@ -770,6 +812,7 @@ case "$language" in
 	ADV5="Enable/disable installing"
 	ADV6="Install the DFTool in $binary_location"
 	ADV7="Uninstall from $binary_location the DFTool"
+	ADV8="Set the number of iteration for the default formatting method"
 	INFO1="Home page of Credere per Cedere"
 	INFO2="Home page of Dejavu Project"
 	INFO3="Facebook page of Credere per Veder"
@@ -802,6 +845,12 @@ case "$language" in
 	TitleEnInst="Enable install"
 	EnInst="Enable installing feature?"
 	INSTERRFI="Installation file is missing, the installation is aborted. try to update the file or check your Internet connection, the installation will be aborted"
+	ITTITLE="How mamny times do you want to iterate the formatting method? ( DEFAULT = 1 ) "
+	titleF="WARNING"
+	ASKF="The Tool will format all drives except for the one where / is mounted. Do you want to continue?"
+	ABORTEDF="Formatting canceled"
+	INFOT="INFORMATION"
+	ALLERTINST="Partitions have to be manually expanded at the end of the process. The disk minimum size is $minimum_space GB in order to complete the installation"
 	 ;;
 esac
 
@@ -835,6 +884,7 @@ W=$(whiptail --title "Menu $titolo $version" --menu "$MainMenu" $r $c 6 \
 
 case "$W" in 
 	1)	spegnimento
+	    whiptail --title "$INFOINST" --msgbox "$ALLERTINST" $r $c
 		get_disks 
 		check_img_update & clear
 		formatting
@@ -845,6 +895,7 @@ case "$W" in
 		formatting
 		spegni ;;
 	3)	spegnimento
+	    whiptail --title "$INFOINST" --msgbox "$ALLERTINST" $r $c
 		check_img_update
 		installa
 		spegni ;;
@@ -856,7 +907,8 @@ case "$W" in
         	"4" "$ADV4" \
         	"5" "$ADV5" \
         	"6" "$ADV6" \
-        	"7" "$ADV7"  3>&1 1>&2 2>&3)
+        	"7" "$ADV7" \
+        	"8" "ADV8"  3>&1 1>&2 2>&3)
         	case "$Z" in 
         	    1) fcheck=1
         	       check_img_update
@@ -881,6 +933,11 @@ case "$W" in
                        rm -rf $working_dir
         	       fi
         	       reopenDFTool ;;
+        	    8) iteration=$(whiptail --inputbox "$ITTITLE" $r $c --title "$CFM" 3>&1 1>&2 2>&3) 
+                   if [[ $iteration -le 1 ]]; then
+                       iteration=1
+                   fi
+                   reopenDFTool;;
         	    *) reopenDFTool;;
         	esac ;;
 	5)  
