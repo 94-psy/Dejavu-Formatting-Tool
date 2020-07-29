@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.6581
+version=0.659
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -256,7 +256,7 @@ if (whiptail  --title "$titleF" --yesno "$ASKF" $r $c ); then
             if [[ "$debug_mode" = "OFF" ]]; then
                 echo ""
                 #badblocks part, 4 destructive pattern
-	            echo "sudo badblocks -fwsv /dev/$i -o $local_log/log_$i" >> "$local_bin"/.tmp_"$i" 
+	        echo "sudo badblocks -fwsv /dev/$i -o $local_log/log_$i" >> "$local_bin"/.tmp_"$i" 
     	        #DD with another 0 pattern
                 echo "dd if=/dev/zero of=/dev/$i status=progress" >> "$local_bin"/.tmp_"$i"
         
@@ -328,10 +328,9 @@ if (whiptail  --title "$titleF" --yesno "$ASKF" $r $c ); then
         echo "echo '$StartDSK/$i'" >> "$local_bin"/.tmp_"$i"
 
         if [[ "$debug_mode" = "OFF" ]]; then
-        echo ""
 	    #Gutmann method
             echo "sudo nwipe --autonuke --logfile=$local_log/log_$i --method=gutmann /dev/$i --nowait -r $iteration" >> "$local_bin"/.tmp_"$i"
-	    fi
+	fi
 	    
         echo "echo '1' >> $working_dir/.counter" >> "$local_bin"/.tmp_"$i"
         echo "rm $local_bin/.tmp_$i" >> "$local_bin"/.tmp_"$i"
@@ -884,7 +883,7 @@ W=$(whiptail --title "Menu $titolo $version" --menu "$MainMenu" $r $c 6 \
 
 case "$W" in 
 	1)	spegnimento
-	    whiptail --title "$INFOINST" --msgbox "$ALLERTINST" $r $c
+	    	whiptail --title "$INFOINST" --msgbox "$ALLERTINST" $r $c
 		get_disks 
 		check_img_update & clear
 		formatting
@@ -895,12 +894,11 @@ case "$W" in
 		formatting
 		spegni ;;
 	3)	spegnimento
-	    whiptail --title "$INFOINST" --msgbox "$ALLERTINST" $r $c
+	    	whiptail --title "$INFOINST" --msgbox "$ALLERTINST" $r $c
 		check_img_update
 		installa
 		spegni ;;
-	4)  
-	    Z=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 10 \
+	4)    	Z=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 10 \
         	"1" "$ADV1" \
         	"2" "$ADV2" \
         	"3" "$ADV3" \
@@ -916,9 +914,9 @@ case "$W" in
         	    2) update_DFTool
         	       reopenDFTool ;;
         	    3) dipendenze
-                   dep="OK" 
-                   update_config
-                   reopenDFTool ;;
+		       dep="OK" 
+                       update_config
+                       reopenDFTool ;;
         	    4) choose_f
         	       update_config
         	       reopenDFTool ;;
@@ -934,14 +932,13 @@ case "$W" in
         	       fi
         	       reopenDFTool ;;
         	    8) iteration=$(whiptail --inputbox "$ITTITLE" $r $c --title "$CFM" 3>&1 1>&2 2>&3) 
-                   if [[ $iteration -le 1 ]]; then
-                       iteration=1
-                   fi
-                   reopenDFTool;;
-        	    *) reopenDFTool;;
+                        if [[ $iteration -le 1 ]]; then
+                       		iteration=1
+                   	fi
+                   	reopenDFTool;;
+        	    *)  reopenDFTool;;
         	esac ;;
-	5)  
-	        Y=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 10 \
+	5)      Y=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 10 \
         	"1" "$INFO1" \
         	"2" "$INFO2" \
         	"3" "$INFO3" \
