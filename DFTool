@@ -308,7 +308,7 @@ function formattag ()
         if [[ "$debug_mode" = "OFF" ]]; then
         echo ""
 	    #Gutmann method
-            echo "sudo nwipe --autonuke --logfile=$local_log/log_$i --method=gutmann /dev/$i " >> "$local_bin"/.tmp_"$i"
+            echo "sudo nwipe --autonuke --logfile=$local_log/log_$i --method=gutmann /dev/$i --nowait" >> "$local_bin"/.tmp_"$i"
 	    fi
 	    
         echo "echo '1' >> $working_dir/.counter" >> "$local_bin"/.tmp_"$i"
