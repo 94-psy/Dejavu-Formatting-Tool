@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.657
+version=0.658
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -492,7 +492,7 @@ if [ "$doinstall" = true ]; then
         if [[ "$debug_mode" = "OFF" ]]; then
 	    echo ""
             #Installing with DD
-            echo "dd if=$working_dir/$file_name of=/dev/$i status=progress" >> "$local_bin"/.tmp_i_"$i"
+            echo "gunzip -c $working_dir/$file_name | dd of=/dev/$i status=progress" >> "$local_bin"/.tmp_i_"$i"
       
         fi
         
