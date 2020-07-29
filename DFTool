@@ -49,6 +49,11 @@ local_bin="$working_dir/bin"
 local_log="$working_dir/log"
 conf_file="$working_dir/configuration.conf"
 fcheck=0
+URL1="http://www.crederepervedere.org/"
+URL2="https://progettodejavu.blogspot.com/"
+URL3="https://www.facebook.com/crederepervedereonlus/"
+URL4="https://www.facebook.com/progettodejavu/"
+URL5="https://github.com/94-psy/Dejavu-Formatting-Tool"
 
 if [ -f "$working_dir" ]; then
     echo "Working directory is OK"
@@ -886,15 +891,15 @@ case "$W" in
         	"4" "$INFO4" \
         	"5" "$INFO5" 3>&1 1>&2 2>&3)
         	case "$Y" in 
-        	    1) su - $user sensible-browser http://www.crederepervedere.org/ 2> /dev/null &
+        	    1) su - $user sensible-browser $URL1 2> /dev/null
         	       reopenDFTool ;;
-        	    2) su - $user sensible-browser https://progettodejavu.blogspot.com/ 2> /dev/null &
+        	    2) su - $user sensible-browser $URL2 2> /dev/null
         	       reopenDFTool ;;
-        	    3) su - $user sensible-browser https://www.facebook.com/crederepervedereonlus/ 2> /dev/null &
+        	    3) su - $user sensible-browser $URL3 2> /dev/null
         	       reopenDFTool ;;
-        	    4) su - $user sensible-browser https://www.facebook.com/progettodejavu/ 2> /dev/null &
+        	    4) su - $user sensible-browser $URL4 2> /dev/null
         	       reopenDFTool ;;
-        	    5) su - $user sensible-browser https://github.com/94-psy/Dejavu-Formatting-Tool 2> /dev/null &
+        	    5) su - $user sensible-browser $URL5 2> /dev/null
         	       reopenDFTool ;;
         	    *) reopenDFTool ;;
         	esac ;;			
