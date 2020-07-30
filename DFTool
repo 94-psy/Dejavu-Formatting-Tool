@@ -255,7 +255,7 @@ if (whiptail  --title "$titleF" --yesno "$ASKF" $r $c ); then
         echo "for ii in {0..$iteration..1}" >> "$local_bin"/.tmp_"$i"
         echo "do" >> "$local_bin"/.tmp_"$i"
             if [[ "$debug_mode" = "OFF" ]]; then
-                echo "echo '$ITER1 $ii $ITER2 $iteration'  >> "$local_bin"/.tmp_"$i"
+                echo "echo '$ITER1 $ii $ITER2 $iteration' " >> "$local_bin"/.tmp_"$i"
                 #badblocks part, 4 destructive pattern"
 	        echo "sudo badblocks -fwsv /dev/$i -o $local_log/log_$i" >> "$local_bin"/.tmp_"$i" 
     	        #DD with another 0 pattern
