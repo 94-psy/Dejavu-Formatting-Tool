@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.659
+version=0.66
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -907,7 +907,7 @@ case "$W" in
         	"5" "$ADV5" \
         	"6" "$ADV6" \
         	"7" "$ADV7" \
-        	"8" "ADV8"  3>&1 1>&2 2>&3)
+        	"8" "$ADV8"  3>&1 1>&2 2>&3)
         	case "$Z" in 
         	    1) fcheck=1
         	       check_img_update
