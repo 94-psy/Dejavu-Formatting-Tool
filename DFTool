@@ -251,16 +251,14 @@ if (whiptail  --title "$titleF" --yesno "$ASKF" $r $c ); then
         rm -rf "$local_bin"/.tmp_"$i" 2>/dev/null
         echo "$StartDSK/$i"
         echo "echo '$StartDSK/$i'" >> "$local_bin"/.tmp_"$i"
-        echo "t=1" >> "$local_bin"/.tmp_"$i"
         echo "for ii in {0..$iteration..1}" >> "$local_bin"/.tmp_"$i"
         echo "do" >> "$local_bin"/.tmp_"$i"
             if [[ "$debug_mode" = "OFF" ]]; then
-                echo "echo '$ITER1 $t $ITER2 $iteration' " >> "$local_bin"/.tmp_"$i"
+                echo "echo '$ITER1 $iteration' " >> "$local_bin"/.tmp_"$i"
                 #badblocks part, 4 destructive pattern"
 	        echo "sudo badblocks -fwsv /dev/$i -o $local_log/log_$i" >> "$local_bin"/.tmp_"$i" 
     	        #DD with another 0 pattern
                 echo "dd if=/dev/zero of=/dev/$i status=progress" >> "$local_bin"/.tmp_"$i"
-		echo "t=$(($t+1))" >> "$local_bin"/.tmp_"$i"
         	echo "clear" >> "$local_bin"/.tmp_"$i"
             fi
         echo "done" >> "$local_bin"/.tmp_"$i"
@@ -797,8 +795,8 @@ case "$language" in
 	ABORTEDF="Formattazione annullata"
 	INFOT="INFORMAZIONE"
 	ALLERTINST="Le partizioni sono da ampliare manualmente a fine processo. Il disco deve essere da almeno $minimum_space GB per completare l'installazione"
-	ITER1="Iterazione numero"
-	ITER2="di"
+	ITER1="Numero totale di iterazioni:"
+
 	 ;;
 				
 	*) #set EN
@@ -854,8 +852,7 @@ case "$language" in
 	ABORTEDF="Formatting canceled"
 	INFOT="INFORMATION"
 	ALLERTINST="Partitions have to be manually expanded at the end of the process. The disk minimum size is $minimum_space GB in order to complete the installation"
-	ITER1="Iteration number"
-	ITER2="of"
+	ITER1="Total iterations number:"
 	 ;;
 esac
 
