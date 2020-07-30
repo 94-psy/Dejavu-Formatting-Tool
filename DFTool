@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.663
+version=0.664
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -114,7 +114,7 @@ function create_config_file ()
         echo "DO_INSTALL=0" >> $conf_file
     fi
     #set iteration number
-    SETTINGS=$(whiptail --inputbox "How mamny times do you want to iterate the formatting method? ( DEFAULT = 1 ) " $r $c --title "Configuration file" 3>&1 1>&2 2>&3) 
+    SETTINGS=$(whiptail --inputbox "How many times do you want to iterate the formatting method? ( DEFAULT = 1 ) " $r $c --title "Configuration file" 3>&1 1>&2 2>&3) 
     if [[ $SETTINGS -ge 1 ]]; then
         echo "ITER_NUMER=$SETTINGS" >> $conf_file
     else
@@ -676,6 +676,7 @@ if [ -z $iteration ]; then
     if [[ $iteration -le 1 ]]; then
         iteration=1
     fi
+    updateconf=1
 fi
 
 language=$( cat $conf_file | grep LAN= | tr -d LAN= )
