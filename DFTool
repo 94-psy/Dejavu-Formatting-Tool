@@ -217,8 +217,9 @@ function get_disks ()
     done < '$file' 
     dsk_type="$(echo $to_avoid | head -c 4)"
     case "$dsk_type" in
-	    nvme)	to_avoid="${to_avoid::-2}" ;;
-	    *) to_avoid="${to_avoid::-1}";;	
+	    nvme) to_avoid="$(echo $to_avoid | head -c 4)" ;; #FOR NVME DISKS
+	    mmcb) to_avoid="$(echo $to_avoid | head -c 7)" #FOR MMCBLK DISKS (RASPBERRY)
+	    *) to_avoid="$(echo $to_avoid | head -c 3)";; #FOR SATA DISKS
     esac
 
     while read name dsk_type mounting_point 
