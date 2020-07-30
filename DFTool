@@ -54,7 +54,7 @@ URL2="https://progettodejavu.blogspot.com/"
 URL3="https://www.facebook.com/crederepervedereonlus/"
 URL4="https://www.facebook.com/progettodejavu/"
 URL5="https://github.com/94-psy/Dejavu-Formatting-Tool"
-$minimum_space=80
+minimum_space=80
 
 if [ -f "$working_dir" ]; then
     echo "Working directory is OK"
@@ -218,8 +218,8 @@ function get_disks ()
     dsk_type="$(echo $to_avoid | head -c 4)"
     case "$dsk_type" in
 	    nvme) to_avoid="$(echo $to_avoid | head -c 4)" ;; #FOR NVME DISKS
-	    mmcb) to_avoid="$(echo $to_avoid | head -c 7)" #FOR MMCBLK DISKS (RASPBERRY)
-	    *) to_avoid="$(echo $to_avoid | head -c 3)";; #FOR SATA DISKS
+	    mmcb) to_avoid="$(echo $to_avoid | head -c 7)" ;; #FOR MMCBLK DISKS (RASPBERRY)
+	    *) to_avoid="$(echo $to_avoid | head -c 3)" ;; #FOR SATA DISKS
     esac
 
     while read name dsk_type mounting_point 
