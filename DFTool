@@ -252,17 +252,17 @@ if (whiptail  --title "$titleF" --yesno "$ASKF" $r $c ); then
         echo "$StartDSK/$i"
         echo "echo '$StartDSK/$i'" >> "$local_bin"/.tmp_"$i"
         
-        for ii in {0..$iteration..1}
-        do
+        echo "for ii in {0..$iteration..1}" >> "$local_bin"/.tmp_"$i"
+        echo "do" >> "$local_bin"/.tmp_"$i"
             if [[ "$debug_mode" = "OFF" ]]; then
-                echo "$ITER1 $ii $ITER2 $iteration" 
-                #badblocks part, 4 destructive pattern
+                echo "echo "$ITER1 $ii $ITER2 $iteration"  >> "$local_bin"/.tmp_"$i"
+                #badblocks part, 4 destructive pattern"
 	        echo "sudo badblocks -fwsv /dev/$i -o $local_log/log_$i" >> "$local_bin"/.tmp_"$i" 
     	        #DD with another 0 pattern
                 echo "dd if=/dev/zero of=/dev/$i status=progress" >> "$local_bin"/.tmp_"$i"
-        	clear
+        	echo "clear" >> "$local_bin"/.tmp_"$i"
             fi
-        done
+        echo "done" >> "$local_bin"/.tmp_"$i"
         echo "echo '1' >> $working_dir/.counter" >> "$local_bin"/.tmp_"$i"
         echo "rm $local_bin/.tmp_$i" >> "$local_bin"/.tmp_"$i"
         echo "exit 0" >> "$local_bin"/.tmp_"$i"
