@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.664
+version=0.6641
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -951,15 +951,15 @@ case "$W" in
         	"4" "$INFO4" \
         	"5" "$INFO5" 3>&1 1>&2 2>&3)
         	case "$Y" in 
-        	    1) su - $user sensible-browser $URL1 2> /dev/null
+        	    1) sudo -u $user sensible-browser $URL1 2> /dev/null &
         	       reopenDFTool ;;
-        	    2) su - $user sensible-browser $URL2 2> /dev/null
+        	    2) sudo -u $user sensible-browser $URL2 2> /dev/null &
         	       reopenDFTool ;;
-        	    3) su - $user sensible-browser $URL3 2> /dev/null
+        	    3) sudo -u $user sensible-browser $URL3 2> /dev/null &
         	       reopenDFTool ;;
-        	    4) su - $user sensible-browser $URL4 2> /dev/null
+        	    4) sudo -u $user sensible-browser $URL4 2> /dev/null &
         	       reopenDFTool ;;
-        	    5) su - $user sensible-browser $URL5 2> /dev/null
+        	    5) sudo -u $user sensible-browser $URL5 2> /dev/null &
         	       reopenDFTool ;;
         	    *) reopenDFTool ;;
         	esac ;;			
