@@ -48,7 +48,16 @@ working_dir="$home/.Dejavu"
 local_bin="$working_dir/bin"
 local_log="$working_dir/log"
 conf_file="$working_dir/configuration.conf"
-fcheck=0
+server="https://google.it"
+server_check="https://google.it"
+file_name="dejavu.img.gz"
+local_check_name="dejavu.img.gz.md5"
+local_check_downloaded="$locale_check.new" #contains the  local position of the downloaded checksum file
+local_file="$working_dir/$file_name" #contains the  local position of the file
+locale_check="$working_dir/$local_check_name" #contains the  local position of the checksum file
+waiting_time=30 #check every 30 seconds
+update_server=https://raw.githubusercontent.com/94-psy/Dejavu-Formatting-Tool/master/DFTool
+total_disks=0
 URL1="http://www.crederepervedere.org/"
 URL2="https://progettodejavu.blogspot.com/"
 URL3="https://www.facebook.com/crederepervedereonlus/"
@@ -61,8 +70,6 @@ if [ -f "$working_dir" ]; then
    else
    mkdir -p $working_dir
 fi
-
-
 
 
 ########################FUNCTIONS########################
@@ -93,26 +100,13 @@ function create_config_file ()
 
     whiptail --title "Missing Config File in $working_dir" --msgbox "The configurration file is missing, now we will create a new one. Please answer the short questions" $r $c 
     
-    #decide if set the installation or not
-    if (whiptail  --title "Enable install" --yesno "Enable installing feature?" $r $c ); then
-        #set server addr
-        SETTINGS=$(whiptail --inputbox "What is the Server address of the file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
-        echo "SERVER_ADDR=$SETTINGS" >> $conf_file
-        #set server checksum addr
-        SETTINGS=$(whiptail --inputbox "What is the Server address of the checksum file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
-        echo "FILE_CHECK_DEST=$SETTINGS" >> $conf_file
-        #set iso file name
-        SETTINGS=$(whiptail --inputbox "What is the name of the file that has to be retrieved? (I.E. my_file.iso or my_file.img)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3) 
-        echo "FILE_NAME=$SETTINGS" >> $conf_file
-        #set checksum file name
-        SETTINGS=$(whiptail --inputbox "What is the name of the checksum file that has to be retrieved? (I.E. my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
-        echo "FILE_CHECK_NAME=$SETTINGS" >> $conf_file
-        echo "DO_INSTALL=1" >> $conf_file
-        doinstall=1
-    else
-        doinstall=0
-        echo "DO_INSTALL=0" >> $conf_file
-    fi
+    #set language
+    SETTINGS=$(whiptail --title "Configuration file" --radiolist \
+    "Choose user's language"  $r $c 4 \
+    "EN" "English (default)" ON \
+    "IT" "Italian" OFF 3>&1 1>&2 2>&3) 
+    echo "LAN=$SETTINGS" >> $conf_file
+    
     #set iteration number
     SETTINGS=$(whiptail --inputbox "How many times do you want to iterate the formatting method? ( DEFAULT = 1 ) " $r $c --title "Configuration file" 3>&1 1>&2 2>&3) 
     if [[ $SETTINGS -ge 1 ]]; then
@@ -120,6 +114,7 @@ function create_config_file ()
     else
         echo "ITER_NUMER=1" >> $conf_file
     fi
+    
     #set formatting method
     SETTINGS=$(whiptail --title "Configuration file" --radiolist \
     "Choose default formatting"  $r $c 4 \
@@ -127,15 +122,11 @@ function create_config_file ()
     "G" "Gutmann method, 35 pattern" OFF \
     "N" "Ask every time" OFF 3>&1 1>&2 2>&3)
     echo "FORM=$SETTINGS" >> $conf_file
-    #set language
-    SETTINGS=$(whiptail --title "Configuration file" --radiolist \
-    "Choose user's language"  $r $c 4 \
-    "EN" "English (default)" ON \
-    "IT" "Italian" OFF 3>&1 1>&2 2>&3) 
-    echo "LAN=$SETTINGS" >> $conf_file
+    
     #check dependency
     dipendenze
     echo "DEP=OK" >> $conf_file
+    
     #set debug    
     echo "DEBUG=OFF" >> $conf_file
     sudo chmod 775 $conf_file
@@ -146,13 +137,6 @@ function update_config ()
 {
     mv $conf_file "$conf_file.old" 
     touch $conf_file
-    echo "DO_INSTALL=$doinstall" >> $conf_file
-    if [ "$doinstall" = true ]; then
-        echo "SERVER_ADDR=$server" >> $conf_file
-        echo "FILE_NAME=$file_name" >> $conf_file
-        echo "FILE_CHECK_NAME=$local_check_name" >> $conf_file
-        echo "FILE_CHECK_DEST=$server_check" >> $conf_file
-    fi
     echo "ITER_NUMER=$iteration" >> $conf_file
     echo "LAN=$language" >> $conf_file
     echo "DEP=$dep" >> $conf_file
@@ -189,9 +173,9 @@ function prepara_file ()
     mkdir -p $working_dir
     mkdir -p $local_bin
     mkdir -p $local_log
-    sudo chmod 777 --recursive $working_dir
-    sudo chmod 777 --recursive $local_bin
-    sudo chmod 777 --recursive $local_log
+    sudo chmod 775 --recursive $working_dir
+    sudo chmod 775 --recursive $local_bin
+    sudo chmod 775 --recursive $local_log
     rm -rf .counter
     rm -rf '$file'
     touch '$file'
@@ -239,11 +223,9 @@ function get_disks ()
 ########################CLASSICAL FORMATTING METHOD########################
 function formatta ()
 {
-if (whiptail  --title "$titleF" --yesno "$ASKF" $r $c ); then
+if (whiptail  --title "$titleW" --yesno "$ASKF" $r $c ); then
         
-    
-    
-    
+       
     touch "$working_dir"/.counter
     for i in ${disks_list[@]};
     do
@@ -317,7 +299,7 @@ fi
 ########################GUTMANN FORMATTING METHOD########################
 function formattag ()
 {
-if (whiptail  --title "$titleF" --yesno "$ASKF" $r $c ); then
+if (whiptail  --title "$titleW" --yesno "$ASKF" $r $c ); then
 
     
     for i in ${disks_list[@]};
@@ -406,88 +388,35 @@ esac
 function check_img_update () 
 
 {
-    if [[ "$doinstall" = true || $fcheck -eq 1 ]]; then
-        sudo rm -rf "$local_check_downloaded"	
-        fcheck=0
-        wget $server_check -O $local_check_downloaded -T 30 -t 1 2> /dev/null
-        exitstatus="$?"
+
+sudo rm -rf "$local_check_downloaded"	
+wget $server_check -O $local_check_downloaded -T 15 -t 2 2> /dev/null
+exitstatus="$?"
+
+if [[ "$exitstatus" -eq 0 ]] ; then
+    #computing MD5 checksum
+    md5sum "$local_file" | awk '{ print $1}' > "$locale_check"
+    
+    md5_server=$(sudo head -n 1 "$local_check_downloaded") #md5sum just downloaded
+    md5_local=$(sudo head -n 1 "$locale_check") #md5sum already on local drive
         
-        if [[ "$exitstatus" -eq 0 ]] ; then
-            #computing MD5 checksum
-            md5sum "$local_file" | awk '{ print $1}' > "$locale_check"
-    
-            md5_server=$(sudo head -n 1 "$local_check_downloaded") #md5sum just downloaded
-            md5_local=$(sudo head -n 1 "$locale_check") #md5sum already on local drive
-    
-            if [ "$md5_local" = "$md5_server" ] ; then
-                    echo "Update not necessary"
-    
-                else
-                    echo "Updating.."
-                    sudo mv "$local_check_downloaded" "$locale_check"
-                    sudo rm -rf $local_file 2>/dev/null
-        	        wget $server -O $local_file  2> /dev/null
-    
-            fi
-            sudo rm -rf $local_check_downloaded 2>/dev/null
-        else
-        whiptail --title "$ERRORT" --msgbox "$WGETERROR" $r $c
-        fi
-    fi
-}
-
-
-
-function enable_install () #
-
-{
-    if (whiptail  --title "$TitleEnInst" --yesno "$EnInst" $r $c ); then
-        doinstall=true
-        if [ "$doinstall" = true ]; then
-    
-        server=$( cat $conf_file | grep SERVER_ADDR= | tr -d SERVER_ADDR= ) #contains the  server destination of the file
-        while [ -z "$server" ]
-        do
-            #it's empty
-            updateconf=1
-            server=$(whiptail --inputbox "What is the Server address of the file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file)" $r $c --title "Configuration file incomplete" 3>&1 1>&2 2>&3)
-        done
-        
-        
-        file_name=$( cat $conf_file | grep FILE_NAME= | tr -d FILE_NAME= )  #contains the  local file name
-        while [ -z "$file_name" ]
-        do
-            #it's empty
-            updateconf=1
-            file_name=$(whiptail --inputbox "What is the name of the file that has to be retrieved? (I.E. my_file.iso or my_file.img)" $r $c --title "Configuration file incomplete" 3>&1 1>&2 2>&3)
-        done
-    
-    
-        server_check=$( cat $conf_file | grep FILE_CHECK_DEST= | tr -d FILE_CHECK_DEST= ) #contains the  server destination of the checksum
-        while [ -z "$server_check" ]
-        do
-            #it's empty
-            updateconf=1
-            server_check=$(whiptail --inputbox "What is the Server address of the checksum file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
-        done
-    
-    
-        local_check_name=$( cat $conf_file | grep FILE_CHECK_NAME= | tr -d FILE_CHECK_NAME= )
-        while [ -z "$local_check_name" ]
-        do
-            #it's empty
-            updateconf=1
-            local_check_name=$(whiptail --inputbox "What is the name of the checksum file that has to be retrieved? (I.E. my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file incomplete" 3>&1 1>&2 2>&3)
-        done
-    
-    fi
+    if [ "$md5_local" = "$md5_server" ] ; then
+        echo "Update not necessary"
     
     else
-        doinstall=false
-    fi
+        echo "Updating.."
+        sudo mv "$local_check_downloaded" "$locale_check"
+        sudo rm -rf $local_file 2>/dev/null
+        wget $server -O $local_file  2> /dev/null
     
-    update_config
+    fi
+    sudo rm -rf $local_check_downloaded 2>/dev/null
+else
+        whiptail --title "$ERRORT" --msgbox "$WGETERROR" $r $c
+fi
+
 }
+
 
 
 
@@ -497,15 +426,6 @@ function installa ()
 {
 #if [ -f "$local_file" ]; then #in case of error (missing installation file) i can't install and i will print an error
 if [ -f "$local_file" ]; then
-    echo ""
-else
-    doinstall=false
-    whiptail --title "$ERRORT" --msgbox "$INSTERRFI" $r $c
-fi
-
-
-
-if [ "$doinstall" = true ]; then
     get_disks
     touch "$working_dir"/.i_counter
     for i in ${disks_list[@]};
@@ -552,7 +472,7 @@ if [ "$doinstall" = true ]; then
 
 else
 
-    whiptail --title "$ERRORT" --msgbox "$INSTERR" $r $c
+    whiptail --title "$ERRORT" --msgbox "$INSTERRFI" $r $c
 fi
 
 }
@@ -615,61 +535,6 @@ else
 fi
 
 
-
-#Check if I have to install the system or not. if check also the server
-doinstall="$( cat $conf_file | grep DO_INSTALL= | tr -d DO_INSTALL= )"
-if [ -z "$doinstall" ]; then
-    #it's empty
-    updateconf=1
-    if (whiptail  --title "Enable install" --yesno "Enable installing feature?" $r $c ); then
-        doinstall=true 
-    else
-        doinstall=false 
-    fi
-fi
-
-
-
-if [ "$doinstall" = true ]; then
-
-    server=$( cat $conf_file | grep SERVER_ADDR= | tr -d SERVER_ADDR= ) #contains the  server destination of the file
-    while [ -z "$server" ]
-    do
-        #it's empty
-        updateconf=1
-        server=$(whiptail --inputbox "What is the Server address of the file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file)" $r $c --title "Configuration file incomplete" 3>&1 1>&2 2>&3)
-    done
-    
-    
-    file_name=$( cat $conf_file | grep FILE_NAME= | tr -d FILE_NAME= )  #contains the  local file name
-    while [ -z "$file_name" ]
-    do
-        #it's empty
-        updateconf=1
-        file_name=$(whiptail --inputbox "What is the name of the file that has to be retrieved? (I.E. my_file.iso or my_file.img)" $r $c --title "Configuration file incomplete" 3>&1 1>&2 2>&3)
-    done
-
-
-    server_check=$( cat $conf_file | grep FILE_CHECK_DEST= | tr -d FILE_CHECK_DEST= ) #contains the  server destination of the checksum
-    while [ -z "$server_check" ]
-    do
-        #it's empty
-        updateconf=1
-        server_check=$(whiptail --inputbox "What is the Server address of the checksum file that has to be retrieved? (I.E. 10.0.0.3/foo/my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file" 3>&1 1>&2 2>&3)
-    done
-
-
-    local_check_name=$( cat $conf_file | grep FILE_CHECK_NAME= | tr -d FILE_CHECK_NAME= )
-    while [ -z "$local_check_name" ]
-    do
-        #it's empty
-        updateconf=1
-        local_check_name=$(whiptail --inputbox "What is the name of the checksum file that has to be retrieved? (I.E. my_file.iso.md5 NB: AT THE MOMENT, ONLY MD5 IS SUPPORTED)" $r $c --title "Configuration file incomplete" 3>&1 1>&2 2>&3)
-    done
-    
-fi
-
-
 iteration=$( cat $conf_file | grep ITER_NUMER= | tr -d ITER_NUMER= )
 if [ -z $iteration ]; then
     iteration=$(whiptail --inputbox "How mamny times do you want to iterate the formatting method? ( DEFAULT = 1 ) " $r $c --title "Configuration file" 3>&1 1>&2 2>&3) 
@@ -721,14 +586,6 @@ if [ -z "$debug_mode" ]; then
 fi
 
 
-
-local_check_downloaded="$locale_check.new" #contains the  local position of the downloaded checksum file
-local_file="$working_dir/$file_name" #contains the  local position of the file
-locale_check="$working_dir/$local_check_name" #contains the  local position of the checksum file
-waiting_time=30 #check every 30 seconds
-update_server=https://raw.githubusercontent.com/94-psy/Dejavu-Formatting-Tool/master/DFTool
-total_disks=0
-
 #case "$dep" in
 #    OK) ;;
 #    *) dipendenze
@@ -754,7 +611,7 @@ case "$language" in
 	ADV2="Aggiorna ed installa il DFTool in $binary_location"
 	ADV3="Controlla le dipendenze"
 	ADV4="Cambia formattazione di default"
-	ADV5="Abilita/Disabilita installazione"
+	ADV5="VUOTO/INCOMPLETO"
 	ADV6="Isinstalla il DFTool in $binary_location"
 	ADV7="Disinstalla il DFTool da $binary_location"
 	ADV8="Imposta il numero di iterazioni del metodo di formattazione scelto"
@@ -772,7 +629,6 @@ case "$language" in
 	DSKFOUND="I dischi su cui lavorare trovati ammontano a:"
 	WGETERROR="Server non raggiungibile, i file locali non saranno aggiornati"
 	ERRORT="ERRORE"
-	INSTERR="L'installazion è disabilitata, per favore abilitarla dal menù delle opzioni avanzate"
 	CFM="Scegliere il metodo di formattazione"
 	CF="Scegliere quale metodo di formattazione si vuole usare"
 	FTEXTM="Scegliere il metodo di formattazione per questa sessione"
@@ -787,11 +643,9 @@ case "$language" in
 	ERRLOG="La cartella log non è vuota, ci potrebbero essere dei dischi difettosi. Chiudere il programma e controllare manualmente la cartella (attendere qualche istante)? In caso contrario i log saranno cancellati"
 	REMT="Disinstallazione"
 	REM="Rimuovere anche la cartella $working_dir e il suo contenuto?"
-	TitleEnInst="Abilita installazione"
-	EnInst="Abilitare l'installazione?"
 	INSTERRFI="Il file di installazione è mancante, installazione annullata. Provare ad aggiornare il file o controllare la connessione ad Internet, l'installazione attuale verrà annullata"
 	ITTITLE="Quante volte si vuole iterare il metodo di formattazione scelto? ( DEFAUL = 1 )"
-	titleF="ATTENZIONE"
+	titleW="ATTENZIONE"
 	ASKF="Il Tool formatterà tutti i dischi tranne quello su cui è montata /. Si desidera proseguire?"
 	ABORTEDF="Formattazione annullata"
 	INFOT="INFORMAZIONE"
@@ -811,7 +665,7 @@ case "$language" in
 	ADV2="Update and install the DFTool in $binary_location"
 	ADV3="Check dependency"
 	ADV4="Change default formatting method"
-	ADV5="Enable/disable installing"
+	ADV5="EMPTY/INCOMPLETE"
 	ADV6="Install the DFTool in $binary_location"
 	ADV7="Uninstall from $binary_location the DFTool"
 	ADV8="Set the number of iteration for the default formatting method"
@@ -829,7 +683,6 @@ case "$language" in
 	DSKFOUND="The total number of disks where is possible to work on is:"
 	WGETERROR="Server unreachable, local files won't be updated"
 	ERRORT="ERROR"
-	INSTERR="Installation is disable from settings, please enable it in advanced options"
 	CFM="Choose the formatting method"
 	CF="Choose which formatting method you want to use"
 	FTEXTM="Choose the formatting method for this session"
@@ -844,11 +697,9 @@ case "$language" in
 	ERRLOG="The log folder is no empy, maybe there was some bad disks. Would you like to quit and manually check the log folder (wait some moments)? If no logs will be deleted"
 	REMT="Uninstalling"
 	REM="Delete also the folder $working_dir and its contents?"
-	TitleEnInst="Enable install"
-	EnInst="Enable installing feature?"
 	INSTERRFI="Installation file is missing, the installation is aborted. try to update the file or check your Internet connection, the installation will be aborted"
 	ITTITLE="How mamny times do you want to iterate the formatting method? ( DEFAULT = 1 ) "
-	titleF="WARNING"
+	titleW="WARNING"
 	ASKF="The Tool will format all drives except for the one where / is mounted. Do you want to continue?"
 	ABORTEDF="Formatting canceled"
 	INFOT="INFORMATION"
@@ -912,8 +763,7 @@ case "$W" in
         	"7" "$ADV7" \
         	"8" "$ADV8"  3>&1 1>&2 2>&3)
         	case "$Z" in 
-        	    1) fcheck=1
-        	       check_img_update
+        	    1) check_img_update
         	       reopenDFTool ;;
         	    2) update_DFTool
         	       reopenDFTool ;;
@@ -924,8 +774,7 @@ case "$W" in
         	    4) choose_f
         	       update_config
         	       reopenDFTool ;;
-        	    5) enable_install
-        	       reopenDFTool ;;
+        	    5) reopenDFTool ;;
         	    6) wget $update_server -O /tmp/DFTool_tmp -T 30 -t 1 2>/dev/null
         	       sudo mv -f /tmp/DFTool_tmp "$binary_location"/DFTool
 		       sudo chmod 775 "$binary_location"/DFTool
