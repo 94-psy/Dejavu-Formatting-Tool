@@ -442,6 +442,8 @@ if [ -f "$local_file" ]; then
         fi
         
         echo "echo '1' >> $working_dir/.i_counter" >> "$local_bin"/.tmp_i_"$i"
+	#for the expansion, the base commands are: sudo echo "- +" | sudo sfdisk -N 1 /dev/sda && sudo e2fsck -f /dev/sda1 && sudo resize2fs /dev/sda1
+	#they must be corected. these commands will expand the main partition till the end of the disk
         echo "rm $local_bin/.tmp_i_$i" >> "$local_bin"/.tmp_i_"$i"
         echo "exit 0" >> "$local_bin"/.tmp_i_"$i"
         chmod +x "$local_bin"/.tmp_i_"$i"
