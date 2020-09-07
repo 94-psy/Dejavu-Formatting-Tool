@@ -1,34 +1,97 @@
 # Dejavu Formatting Tool
 
-## WARNING
+### Index (English)
 
-This project is under development, it's almost finished but not at all. It has several bugs and the major functions are still not activated (just uncomment them if you want to try). It's designed to work on pc with many HD/SSD (maybe not only sata but also NVME and IDE devices) that features just one main drive: every secondary HD will be formatted (also USB devices).
+ - Introduction
+ - Who we are
+ - Installation
+ - To-do list
+ - How to contribure
 
+### Index (Italian)
 
-
-
-## ENG:
-
-The Dejavu Formatting Tool is a tool, made in shell bash, useful for destroying data on your hard disks. It's designed to work with several drives at the same time and also to install your IMG or ISO file.
-
-There are two possible formatting ways: one "soft" with the combination of BadBlocks and DD for a total of 5 patterns at low level; one more intense, with the Gutmann method for a total of 35 pattern.
-
-There is also an option that allows you to install your ISO or IMG or what you want: you have to set the name of your file and the MD5 checksum file in the tool, at the moment, and the it will compare the local MD5 with the one taken from the server to understand if you have the correct file (it's in testing and I'm not sure it's an universal way, so I recommend you to use with your personal servers or to rewrite the MD5 calculation/check). If not it will download the latest/corerct one and then it will install via DD on all the devices.
-
-At the moment it works with every usb and sata device. It should work also with NVME devices and IDE devices ( i will test some IDE in the future)
-
+ - Introduzione
+ - Chi siamo
+ - Installazione
+ - To-do list
+ - Come contribuire
 
 
----------------------------------------------------------------------------------
+# ENG:
 
-## ITA:
+## Introduction:
 
-Il Dejavu Formatting Tool è un tool, fatto in shell bash, utile per distruggere i dati dei tuoi hard disk. Il tool è progettato per lavorare con diversi dischi allo stesso tempo e anche per installare i tuoi file IMG o ISO.
+The Dejavu Formatting Tool is a tool, written in shell bash, useful to perform a low level format on several drives regardless if they are HDDs (sata/pata), SSDs or USB devices.
 
-Ci sono due posibili tipi di formattazioni: una più "leggera" che combina BadBlocks e DD per un totale di 5 passaggi a basso livello; una più intensa che sfrutta il metodo Gutmann per un totale di 35 passaggi a basso livello.
+We have implemented two formatting method: the first one is based on the combination of BadBlocks and DD and it's able to perform 4 pattern at low level for testing the device (BadBlocks) and then an extra pattern with only zeroes (DD); the second method is based on Nwipe and it will perform Gutmann algorithm for a total of 35 pattern at low level.
+The Tool let you chose the method you prefer before starting or a default one.
 
-C'è anche un'opzione che consente di installare la propria immagine ISO o IMG o qual si voglia: bisogna solo impostare il nome del file che si vuole scaricare e del file MD5 dentro il tool, al momento, e questo confronterà il file MD5 in locale con quello scaricato dal server per capire se si avesse il file corretto ( è ancora in fase di test e non sono sicuro sia un metodo universale, quindi raccomando di usarlo su server personali o di riscrivere la parte di controllo e calcolo del check MD5). Se non fosse il file corretto, il tool scaricherà l'ultima versione, o quella corretta, presente sul server e la installerà con DD su tutti i dispositivi connessi.
+The other feature that will be implemented in the near future is the installation of the official Dejavu OS: a remix version of [Linux Mint](https://linuxmint.com/) complete of a set of application useful to cope with disabled people.
 
-Al momento lavora con tutti i dispositivi USB e SATA. Dovrebbe funzionare anche coi dispositivi NVME e IDE (testerò i dispositivi IDE in futuro)
+## Who we are:
+
+We are an onlus no-profit called [Credere Per Vedere](https://translate.google.com/translate?um=1&ie=UTF-8&hl=it&client=tw-ob&sl=it&tl=en&u=http%3A%2F%2Fwww.crederepervedere.org) based in Reggio Emilia (Italy) that recycle, restore and donate old PCs with the help of disabled people. This is possible thanks to the [Dejavu project](https://translate.google.com/translate?um=1&ie=UTF-8&hl=it&client=tw-ob&sl=it&tl=en&u=http%3A%2F%2Fprogettodejavu.blogspot.com%2F), which is a moment in which people with disabilities come from the structures where they live to work with us.
 
 
+## Installation:
+To install the Dejavu Formatting Tool there are two options:
+- Installing from wget
+```sh
+wget https://raw.githubusercontent.com/94-psy/Dejavu-Formatting-Tool/master/DFTool -O /usr/bin/DFTool
+sudo chmod 775 /usr/bin/DFTool
+```
+- Downloading the Git repository
+```sh
+git clone https://github.com/94-psy/Dejavu-Formatting-Tool.git
+cd Dejavu-Formatting-Tool
+sudo chmod 775 DFTool ; ./DFTool
+```
+Then you can use the menu, after the configuration, to install it in your system.
+
+
+## To-do list:
+-[ ] Finish the README
+-[ ] Download and installation of the Dejavu OS
+-[ ] Improve translation
+-[ ] Look for tester
+## How to contribure:
+Follow us on social media, come to visit us, give us help and tips with the program or give us a coffee (on our site)
+Seguiteci sulle nostre pagine social, venite a trovarci, dateci un parere/consiglio sul programma o fai una donazione sul nostro sito!
+
+------------------------------------------------------------------------------------------------
+# ITA:
+
+## Introduzione:
+
+Il Dejavu Formatting Tool è un tool, scritto in shell bash, utile per formattare a basso livello differenti dispositivi, sia che essi siano HDD (sata/pata), SSD o dispositivi USB.
+
+Abbiamo implementato due metodi di formattazioni: il primo è basato sulla combinazione di BadBlocks e DD, capace di fare 4 passaggi a basso livello testando anche il dispositivo (BadBlocks) e uno extra con soli zeri (DD); il secondo metodo è basato su Nwipe ed esegue l'algoritmo di Gutmann, per un totale di 35 passaggi a basso livello.
+Il Tool consente di scegliere il metodo che si preferisce prima di iniziare la formattazione o anche uno di default.
+
+L'altra feature che sarà implementata nel prossimo futuro è l'installazione del sistema operativo ufficiale Dejavu: una versione remix di [Linux Mint](https://linuxmint.com/) completa di un set di applicazioni per supportare i ragazzi diversamente abili.
+
+## Chi siamo:
+Siamo una onlus no-profit chiamata [Credere Per Vedere](http://www.crederepervedere.org/) con sede a Reggio Emilia (Italia) che ricicla, ripristina e dona, coi ragazzi diversamente abili, PC vecchi. Questo è possibile grazie al [progetto Dejavu](http://progettodejavu.blogspot.com/), che è che un momento in cui i ragazzi diversamente abili escono dalle strutture in cui vivono per venire a lavorare con noi.
+## Installazione:
+Per installare il Dejavu Formatting Tool ci sono due opzioni:
+- Installazione da wget
+```sh
+wget https://raw.githubusercontent.com/94-psy/Dejavu-Formatting-Tool/master/DFTool -O /usr/bin/DFTool
+sudo chmod 775 /usr/bin/DFTool
+```
+- Download dal repository di Git
+```sh
+git clone https://github.com/94-psy/Dejavu-Formatting-Tool.git
+cd Dejavu-Formatting-Tool
+sudo chmod 775 DFTool ; ./DFTool
+```
+A questo punto si può installare nel sistema dal menù del programma, dopo la configurazione.
+
+## To-do list:
+-[ ] Finire il README
+-[ ] Download e installazione del Dejavu OS
+-[ ] Migliorare le traduzioni
+-[ ] Cercare dei tester
+## Come contribuire:
+
+Seguiteci sulle nostre pagine social, venite a trovarci, dateci un parere/consiglio sul programma o offrici un caffè sul nostro sito
