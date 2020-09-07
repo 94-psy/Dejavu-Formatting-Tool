@@ -50,10 +50,10 @@ Then you can use the menu, after the configuration, to install it in your system
 
 
 ## To-do list:
--[ ] Finish the README
--[ ] Download and installation of the Dejavu OS
--[ ] Improve translation
--[ ] Look for tester
+- Finish the README
+- Download and installation of the Dejavu OS
+- Improve translation
+- Look for tester
 ## How to contribure:
 Follow us on social media, come to visit us, give us help and tips with the program or give us a coffee (on our site)
 Seguiteci sulle nostre pagine social, venite a trovarci, dateci un parere/consiglio sul programma o fai una donazione sul nostro sito!
@@ -88,10 +88,10 @@ sudo chmod 775 DFTool ; ./DFTool
 A questo punto si può installare nel sistema dal menù del programma, dopo la configurazione.
 
 ## To-do list:
--[ ] Finire il README
--[ ] Download e installazione del Dejavu OS
--[ ] Migliorare le traduzioni
--[ ] Cercare dei tester
+- Finire il README
+- Download e installazione del Dejavu OS
+- Migliorare le traduzioni
+- Cercare dei tester
 ## Come contribuire:
 
 Seguiteci sulle nostre pagine social, venite a trovarci, dateci un parere/consiglio sul programma o offrici un caffè sul nostro sito
