@@ -873,8 +873,7 @@ case "$W" in
                	    6) 
                	       reopenDFTool ;;
                	    *) reopenDFTool ;;
-               	   esac			
-        	       reopenDFTool ;;
+               	   esac ;;			
         	    *) reopenDFTool ;;
         	esac ;;			
 	*) exit 1 ;;
