@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.6641
+version=0.6642
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -622,6 +622,25 @@ case "$language" in
 	INFO3="Pagina Facebook di Credere per Vedere"
 	INFO4="Pagina Facebook del Progetto Dejavu"
 	INFO5="Repository di GitHub"
+	INFO6="Ti piace il Tool? Aiutaci!"
+	HELP1="Diventa volontario con noi"
+	HELP2="Sostienici tramite donazione con IBAN"
+	HELP3="Sostienici tramite donazione con PayPal"
+	HELP4="Sostienici col 5x1000"
+	HELP5="Offrici un caffe' [PayPayl]"
+	HELP6="tmp"
+	HURL1="http://www.crederepervedere.org/p/blog-page_26.html"
+	HELPT2="Sostienici"
+    HELP2="Utilizzando il conto corrente bancario sottoindicato e comunicando i propri dati (Nome, cognome, indirizzo per le persone fisiche; nome azienda, indirizzo fiscale e partita Iva per le aziende) tramite email:
+
+ass.crederepervedere@libero.it
+
+Banco Popolare Società Cooperativa, Agenzia '2' di Reggio Emilia (RE).
+Codice IBAN: IT 60 A 05034 12802 000000009139
+Piu' informazioni all'indirizzo: t.ly/JMxi"
+	HURL3="paypal.me/crederepervedere"
+	HURL4="http://www.crederepervedere.org/p/5xmille.html"
+	HURL5="paypal.me/crederepervedere/2"
 	StartDSK="Avvio il disco /dev"
 	FormattingProgress="Avanzamento formattazione di default..."
 	FormattingProgressG="Avanzamento formattazione con metodo Gutmann..."
@@ -676,6 +695,26 @@ case "$language" in
 	INFO3="Facebook page of Credere per Veder"
 	INFO4="Facebook page of Dejavu Project"
 	INFO5="GitHub repository"
+	INFO6="Do you like the Tool? Help us!"
+	HELP1="Become a volunteer"
+	HELP2="Support us with a donation via bank account"
+	HELP3="Support us with a donation via PayPal"
+	HELP4="Support us with 5x1000"
+	HELP5="Offer us a coffee [PayPayl]"
+	HELP6="tmp"
+	HURL1="https://translate.google.it/translate?sl=it&tl=en&u=http%3A%2F%2Fwww.crederepervedere.org%2Fp%2Fblog-page_26.html"
+    HELPT2="Support us"
+    HELP2="By usign the Bank account and communicating via email your data ( name, surname, address for natural person; company name, company address and VAT number for the business) at:
+
+ass.crederepervedere@libero.it
+
+Banco Popolare Società Cooperativa, Agenzia '2' di Reggio Emilia (RE).
+IBAN: IT 60 A 05034 12802 000000009139
+
+More info at t.ly/5pF2"
+	HURL3="paypal.me/crederepervedere"
+	HURL4="https://translate.google.it/translate?sl=it&tl=en&u=http%3A%2F%2Fwww.crederepervedere.org%2Fp%2F5xmille.html"
+	HURL5="paypal.me/crederepervedere/2"
 	StartDSK="Starting disk /dev"
 	FormattingProgress="Default formatting in progress..."
 	FormattingProgressG="Gutmann's method formatting in progress..."
@@ -800,7 +839,8 @@ case "$W" in
         	"2" "$INFO2" \
         	"3" "$INFO3" \
         	"4" "$INFO4" \
-        	"5" "$INFO5" 3>&1 1>&2 2>&3)
+        	"5" "$INFO5" \
+        	"6" "$INFO6" 3>&1 1>&2 2>&3)
         	case "$Y" in 
         	    1) sudo -u $user sensible-browser $URL1 2> /dev/null &
         	       reopenDFTool ;;
@@ -811,6 +851,29 @@ case "$W" in
         	    4) sudo -u $user sensible-browser $URL4 2> /dev/null &
         	       reopenDFTool ;;
         	    5) sudo -u $user sensible-browser $URL5 2> /dev/null &
+        	       reopenDFTool ;;
+        	    6) Y=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 10 \
+               	   "1" "$HELP1" \
+               	   "2" "$HELP2" \
+               	   "3" "$HELP3" \
+               	   "4" "$HELP4" \
+               	   "5" "$HELP5" \
+               	   "6" "$HELP6" 3>&1 1>&2 2>&3)
+               	   case "$Y" in 
+               	    1) sudo -u $user sensible-browser $HURL1 2> /dev/null &
+               	       reopenDFTool ;;
+               	    2) whiptail --title "$HELPT2" --msgbox "$HELP2" $r $c &
+               	       reopenDFTool ;;
+               	    3) sudo -u $user sensible-browser $HURL3 2> /dev/null &
+               	       reopenDFTool ;;
+               	    4) sudo -u $user sensible-browser $HURL4 2> /dev/null &
+               	       reopenDFTool ;;
+               	    5) sudo -u $user sensible-browser $HURL5 2> /dev/null &
+               	       reopenDFTool ;;
+               	    6) 
+               	       reopenDFTool
+               	    *) reopenDFTool ;;
+               	   esac			
         	       reopenDFTool ;;
         	    *) reopenDFTool ;;
         	esac ;;			
