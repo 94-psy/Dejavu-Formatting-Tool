@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.6643
+version=0.6644
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -631,7 +631,7 @@ case "$language" in
 	HELP6="tmp"
 	HURL1="http://www.crederepervedere.org/p/blog-page_26.html"
 	HELPT2="Sostienici"
-    HELP2="Utilizzando il conto corrente bancario sottoindicato e comunicando i propri dati (Nome, cognome, indirizzo per le persone fisiche; nome azienda, indirizzo fiscale e partita Iva per le aziende) tramite email:
+    HELPD2="Utilizzando il conto corrente bancario sottoindicato e comunicando i propri dati (Nome, cognome, indirizzo per le persone fisiche; nome azienda, indirizzo fiscale e partita Iva per le aziende) tramite email:
 
 ass.crederepervedere@libero.it
 
@@ -704,7 +704,7 @@ Piu' informazioni all'indirizzo: t.ly/JMxi"
 	HELP6="tmp"
 	HURL1="https://translate.google.it/translate?sl=it&tl=en&u=http%3A%2F%2Fwww.crederepervedere.org%2Fp%2Fblog-page_26.html"
     HELPT2="Support us"
-    HELP2="By usign the Bank account and communicating via email your data ( name, surname, address for natural person; company name, company address and VAT number for the business) at:
+    HELPD2="By usign the Bank account and communicating via email your data ( name, surname, address for natural person; company name, company address and VAT number for the business) at:
 
 ass.crederepervedere@libero.it
 
@@ -862,7 +862,7 @@ case "$W" in
                	   case "$Y" in 
                	    1) sudo -u $user sensible-browser $HURL1 2> /dev/null &
                	       reopenDFTool ;;
-               	    2) whiptail --title "$HELPT2" --msgbox "$HELP2" $r $c &
+               	    2) whiptail --title "$HELPT2" --msgbox "$HELPD2" $r $c &
                	       reopenDFTool ;;
                	    3) sudo -u $user sensible-browser $HURL3 2> /dev/null &
                	       reopenDFTool ;;
