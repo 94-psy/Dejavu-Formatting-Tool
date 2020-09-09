@@ -852,14 +852,14 @@ case "$W" in
         	       reopenDFTool ;;
         	    5) sudo -u $user sensible-browser $URL5 2> /dev/null &
         	       reopenDFTool ;;
-        	    6) S=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 10 \
+        	    6) Y=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 10 \
                	   "1" "$HELP1" \
                	   "2" "$HELP2" \
                	   "3" "$HELP3" \
                	   "4" "$HELP4" \
                	   "5" "$HELP5" \
                	   "6" "$HELP6" 3>&1 1>&2 2>&3)
-               	   case "$S" in 
+               	   case "$Y" in 
                	    1) sudo -u $user sensible-browser $HURL1 2> /dev/null &
                	       reopenDFTool ;;
                	    2) whiptail --title "$HELPT2" --msgbox "$HELP2" $r $c &
@@ -871,9 +871,10 @@ case "$W" in
                	    5) sudo -u $user sensible-browser $HURL5 2> /dev/null &
                	       reopenDFTool ;;
                	    6) 
-               	       reopenDFTool
+               	       reopenDFTool ;;
                	    *) reopenDFTool ;;
                	   esac			
+        	       reopenDFTool ;;
         	    *) reopenDFTool ;;
         	esac ;;			
 	*) exit 1 ;;
