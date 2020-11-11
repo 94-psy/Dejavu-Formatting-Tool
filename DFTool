@@ -238,7 +238,7 @@ if (whiptail  --title "$titleW" --yesno "$ASKF" $r $c ); then
             if [[ "$debug_mode" = "OFF" ]]; then
                 echo "echo '$ITER1 $iteration' " >> "$local_bin"/.tmp_"$i"
                 #badblocks part, 4 destructive pattern"
-	        echo "sudo badblocks -fwsv /dev/$i -o $local_log/log_$i" >> "$local_bin"/.tmp_"$i" 
+	        echo "sudo badblocks -b 4096 -fwsv /dev/$i -o $local_log/log_$i" >> "$local_bin"/.tmp_"$i" #-b 4096 in test for drives greater than 4TB
     	        #DD with another 0 pattern
                 echo "dd if=/dev/zero of=/dev/$i status=progress" >> "$local_bin"/.tmp_"$i"
         	echo "clear" >> "$local_bin"/.tmp_"$i"
