@@ -38,13 +38,13 @@ To install the Dejavu Formatting Tool there are two options:
 - Installing from wget
 ```sh
 wget https://raw.githubusercontent.com/94-psy/Dejavu-Formatting-Tool/master/DFTool -O /usr/bin/DFTool
-sudo chmod 775 /usr/bin/DFTool
+sudo chmod 755 /usr/bin/DFTool
 ```
 - Downloading the Git repository
 ```sh
 git clone https://github.com/94-psy/Dejavu-Formatting-Tool.git
 cd Dejavu-Formatting-Tool
-sudo chmod 775 DFTool ; ./DFTool
+sudo chmod 755 DFTool ; ./DFTool
 ```
 Then you can use the menu, after the configuration, to install it in your system.
 
@@ -77,13 +77,13 @@ Per installare il Dejavu Formatting Tool ci sono due opzioni:
 - Installazione da wget
 ```sh
 wget https://raw.githubusercontent.com/94-psy/Dejavu-Formatting-Tool/master/DFTool -O /usr/bin/DFTool
-sudo chmod 775 /usr/bin/DFTool
+sudo chmod 755 /usr/bin/DFTool
 ```
 - Download dal repository di Git
 ```sh
 git clone https://github.com/94-psy/Dejavu-Formatting-Tool.git
 cd Dejavu-Formatting-Tool
-sudo chmod 775 DFTool ; ./DFTool
+sudo chmod 755 DFTool ; ./DFTool
 ```
 A questo punto si può installare nel sistema dal menù del programma, dopo la configurazione.
 
