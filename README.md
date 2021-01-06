@@ -28,6 +28,8 @@ The Tool let you chose the method you prefer before starting or a default one.
 
 The other feature that will be implemented in the near future is the installation of the official Dejavu OS: a remix version of [Linux Mint](https://linuxmint.com/) complete of a set of application useful to cope with disabled people.
 
+## WE DO NOT ASSUME ANY RESPONSIBILITY OR LIABILITY FOR ANY DAMAGE TO YOUR DRIVES OR YOUR PC. USE THIS SOFTWARE AT YOUR OWN RISK, IT WILL DELETE ALL DATA FROM ALL CONNECTED DEVICES IF USED IMPROPERLY
+
 ## Who we are:
 
 We are an onlus no-profit called [Credere Per Vedere](https://translate.google.com/translate?um=1&ie=UTF-8&hl=it&client=tw-ob&sl=it&tl=en&u=http%3A%2F%2Fwww.crederepervedere.org) based in Reggio Emilia (Italy) that recycle, restore and donate old PCs with the help of disabled people. This is possible thanks to the [Dejavu project](https://translate.google.com/translate?um=1&ie=UTF-8&hl=it&client=tw-ob&sl=it&tl=en&u=http%3A%2F%2Fprogettodejavu.blogspot.com%2F), which is a moment in which people with disabilities come from the structures where they live to work with us.
@@ -69,6 +71,8 @@ Abbiamo implementato due metodi di formattazioni: il primo è basato sulla combi
 Il Tool consente di scegliere il metodo che si preferisce prima di iniziare la formattazione o anche uno di default.
 
 L'altra feature che sarà implementata nel prossimo futuro è l'installazione del sistema operativo ufficiale Dejavu: una versione remix di [Linux Mint](https://linuxmint.com/) completa di un set di applicazioni per supportare i ragazzi diversamente abili.
+
+## NON CI ASSUMIAMO NESSUNA RESPONSABILITÀ OD OBBLIGHI PER QUALUNQUE DANNO AI DISPOSITIVI O AL PC. USARE IL SOFTWARE A PROPRIO RISCHIO E PERICOLO, CANCELLA TUTTI I DATI DA TUTTI I DISPOSITIVI CONNESSI, SE USATO IMPROPRIAMENTE.
 
 ## Chi siamo:
 Siamo una onlus no-profit chiamata [Credere Per Vedere](http://www.crederepervedere.org/) con sede a Reggio Emilia (Italia) che ricicla, ripristina e dona, coi ragazzi diversamente abili, PC vecchi. Questo è possibile grazie al [progetto Dejavu](http://progettodejavu.blogspot.com/), che è che un momento in cui i ragazzi diversamente abili escono dalle strutture in cui vivono per venire a lavorare con noi.
