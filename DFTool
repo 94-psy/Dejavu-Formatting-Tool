@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.7
+version=0.7001
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -122,6 +122,7 @@ function create_config_file () #per il metodo di formattazione nuovo
     "R1" "Random, 7 pattern" OFF \
     "R2" "Random, 14 pattern" OFF \
     "HEX" "HEX values, 16 pattern" OFF \
+	"HV" "50 pattern, to be sure" OFF \
     "N" "Ask every time" OFF 3>&1 1>&2 2>&3)
     echo "FORM=$SETTINGS" >> $conf_file
     
@@ -301,6 +302,7 @@ case "$def_formatting" in
 	R1) pattern=" -t random -t random -t random -t random -t random -t random -t random" ;;
 	R2) pattern=" -t random -t random -t random -t random -t random -t random -t random -t random -t random -t random -t random -t random -t random -t random" ;;
 	HEX) pattern=" -t 0x00 -t 0x11 -t 0x22 -t 0x33 -t 0x44 -t 0x55 -t 0x66 -t 0x77 -t 0x88 -t 0x99 -t 0xAA -t 0xBB -t 0xCC -t 0xDD -t 0xEE -t 0xFF" ;;
+	HV) pattern=" -t random -t 0x00 -t 0x00 -t random -t 0x55 -t 0xAA -t 0x924924 -t 0x492492 -t 0x249249 -t 0x00 -t 0x11 -t 0x22 -t 0x33 -t 0x44 -t 0x55 -t 0x66 -t 0x77 -t 0x88 -t 0x99 -t 0xAA -t 0xBB -t 0xCC -t 0xDD -t 0xEE -t 0xFF -t 0x924924 -t 0x492492 -t 0x249249 -t 0x6DB6DB -t 0xB6DB6D -t 0xDB6DB6 -t 0x00 -t 0x11 -t 0x22 -t 0x33 -t 0x44 -t 0x55 -t 0x66 -t 0x77 -t 0x88 -t 0x99 -t 0xAA -t 0xBB -t 0xCC -t 0xDD -t 0xEE -t 0xFF -t random -t 0x00 -t 0x00";;
 	*) 
 	FORMATTING=$(whiptail --title "$FTEXTM" --radiolist \
 	"$FTEXT"  $r $c 8 \
@@ -310,7 +312,8 @@ case "$def_formatting" in
 	"4" "$F4" OFF \
 	"5" "$F5" OFF \
 	"6" "$F6" OFF \
-	"7" "$F7" OFF 3>&1 1>&2 2>&3)
+	"7" "$F7" OFF \
+	"8" "$F8" OFF 3>&1 1>&2 2>&3)
 	case "$FORMATTING" in
 		2)  pattern=" -t random -t random -t random -t random -t 0x55 -t 0xAA -t 0x924924 -t 0x492492 -t 0x249249 -t 0x00 -t 0x11 -t 0x22 -t 0x33 -t 0x44 -t 0x55 -t 0x66 -t 0x77 -t 0x88 -t 0x99 -t 0xAA -t 0xBB -t 0xCC -t 0xDD -t 0xEE -t 0xFF -t 0x924924 -t 0x492492 -t 0x249249 -t 0x6DB6DB -t 0xB6DB6D -t 0xDB6DB6 -t random -t random -t random -t random " ;;
 		3)  pattern=" -t 0x00 -t 0xFF -t random -t 0x96 -t 0x00 -t 0xFF -t random" ;;
@@ -318,6 +321,7 @@ case "$def_formatting" in
 		5)  pattern=" -t random -t random -t random -t random -t random -t random -t random" ;;
 		6)  pattern=" -t random -t random -t random -t random -t random -t random -t random -t random -t random -t random -t random -t random -t random -t random" ;;
 		7)  pattern=" -t 0x00 -t 0x11 -t 0x22 -t 0x33 -t 0x44 -t 0x55 -t 0x66 -t 0x77 -t 0x88 -t 0x99 -t 0xAA -t 0xBB -t 0xCC -t 0xDD -t 0xEE -t 0xFF" ;;
+		8)  pattern=" -t random -t 0x00 -t 0x00 -t random -t 0x55 -t 0xAA -t 0x924924 -t 0x492492 -t 0x249249 -t 0x00 -t 0x11 -t 0x22 -t 0x33 -t 0x44 -t 0x55 -t 0x66 -t 0x77 -t 0x88 -t 0x99 -t 0xAA -t 0xBB -t 0xCC -t 0xDD -t 0xEE -t 0xFF -t 0x924924 -t 0x492492 -t 0x249249 -t 0x6DB6DB -t 0xB6DB6D -t 0xDB6DB6 -t 0x00 -t 0x11 -t 0x22 -t 0x33 -t 0x44 -t 0x55 -t 0x66 -t 0x77 -t 0x88 -t 0x99 -t 0xAA -t 0xBB -t 0xCC -t 0xDD -t 0xEE -t 0xFF -t random -t 0x00 -t 0x00";;
 		*)  pattern=" -t 0xAA -t 0x55 -t 0xFF -t 0x00 -t 0x00" ;;
 	esac
 	;;
@@ -468,6 +472,7 @@ def_formatting=$(whiptail --title "$CFM" --radiolist \
 "R1" "$F5" OFF \
 "R2" "$F6" OFF \
 "HEX" "$F7" OFF \
+"HV"  "$F8" OFF \
 "N" "$FE" OFF 3>&1 1>&2 2>&3)
 }
 
@@ -612,6 +617,7 @@ Piu' informazioni all'indirizzo: t.ly/JMxi"
 	F5="Random, 7 pattern"
 	F6="Random, 14 pattern"
 	F7="Valori HEX, 16 pattern"
+	F8="50 pattern"
 	FE="Chiedere tutte le volte"
 	UPDFT="Aggiornamento DFTool"
 	UPDOK="Il Dejavu Formatting Tool è già all'ultima versione, premere OK per tornare al menu' principale"
@@ -690,6 +696,7 @@ More info at t.ly/5pF2"
 	F5="Random, 7 pattern"
 	F6="Random, 14 pattern"
 	F7="HEX value, 16 pattern"
+	F8="50 pattern"
 	FE="Ask every time"
 	UPDFT="DFTool Updating"
 	UPDOK="The Dejavu Formatting Tool is already up to date, press OK to return to main menu"
