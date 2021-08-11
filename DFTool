@@ -408,7 +408,7 @@ if [ -f "$local_file" ]; then
         echo $(( $index * 100 / $total_disks )) | dialog --title "$titolo" --gauge "$InstallingProgress" $r $c 0
 
         if [[ $index -ge $total_disks ]]; then
-            sleep 1
+            sleep 60
         else
             sleep $waiting_time
         fi
@@ -451,7 +451,7 @@ fi
 
 function reopenDFTool ()
 {
-sleep 1
+sleep 5
 clear
 if [[ $IsInstalled -eq 1 ]] ; then
    sudo -u $user sudo DFTool
