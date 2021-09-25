@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.7002
+version=0.703
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -114,7 +114,7 @@ function create_config_file () #per il metodo di formattazione nuovo
     
     #set formatting method
     SETTINGS=$(whiptail --title "Configuration file" --radiolist \
-    "Choose default formatting"  $r $c 4 \
+    "Choose default formatting method"  $r $c 4 \
     "D" "Badblocks and DD, 5 pattern (default)" ON \
     "G" "Gutmann method, 35 pattern" OFF \
     "USDoD" "US DoD 52220.22-M (ECE), 7 pattern" OFF \
@@ -122,7 +122,7 @@ function create_config_file () #per il metodo di formattazione nuovo
     "R1" "Random, 7 pattern" OFF \
     "R2" "Random, 14 pattern" OFF \
     "HEX" "HEX values, 16 pattern" OFF \
-	"HV" "50 pattern, to be sure" OFF \
+    "HV" "50 pattern, to be sure" OFF \
     "N" "Ask every time" OFF 3>&1 1>&2 2>&3)
     echo "FORM=$SETTINGS" >> $conf_file
     
@@ -157,7 +157,7 @@ function update_DFTool ()
 
 wget $update_server -O /tmp/DFTool_tmp -T 30 -t 1 2>/dev/null
 nversion=$( sed -n '2p' /tmp/DFTool_tmp | tr -d version= )
-if [ "$version" = "$nvefrsion" ] ; then #update only when the version is different --> i want to have alway the latest available version (also one modified manualli with a higher version will be replaced)
+if [ "$version" = "$nvefrsion" ] ; then #update only when the version is different --> i want to have alway the latest available version (also one modified manually with a higher version will be replaced)
     echo "Already Update"
     whiptail --title "$UPDFT" --msgbox "$UPDOK" $r $c
 else
@@ -194,7 +194,7 @@ function get_disks ()
     total_disks=0
     disks_list=()
     prepara_file
-    sudo lsblk -io KNAME,TYPE,MOUNTPOINT  >> '$file' 
+    sudo lsblk -io KNAME,TYPE,MOUNTPOINT  >> '$file' #can be replaced with: RAW_DISKS=$(sudo lsblk -io KNAME,TYPE,MOUNTPOINT)
 
     while read name dsk_type mounting_point 
     do
@@ -202,11 +202,11 @@ function get_disks ()
         then
             to_avoid=$name
         fi
-    done < '$file' 
+    done < '$file' #this part has to change to use only one variable
     dsk_type="$(echo $to_avoid | head -c 4)"
     case "$dsk_type" in
 	    nvme) to_avoid="$(echo $to_avoid | head -c 4)" ;; #FOR NVME DISKS
-	    mmcb) to_avoid="$(echo $to_avoid | head -c 7)" ;; #FOR MMCBLK DISKS (RASPBERRY)
+	    mmcb) to_avoid="$(echo $to_avoid | head -c 7)" ;; #FOR MMCBLK DISKS (RASPBERRY, more in general SD cards)
 	    *) to_avoid="$(echo $to_avoid | head -c 3)" ;; #FOR SATA DISKS
     esac
 
@@ -216,7 +216,7 @@ function get_disks ()
         then
             disks_list+=("$name")
         fi
-    done < '$file'
+    done < '$file' #this part has to change to use only one variable
     for i in ${disks_list[@]}; do
         (( total_disks += 1))
     done
@@ -262,7 +262,7 @@ if (whiptail  --title "$titleW" --yesno "$ASKF" $r $c ); then
 	if [[ $index -ge $total_disks ]]; then
 	    sleep 1
 	else
-	sleep $waiting_time
+	    sleep $waiting_time
 	fi
 	 
 	done
@@ -395,7 +395,7 @@ if [ -f "$local_file" ]; then
         chmod +x "$local_bin"/.tmp_i_"$i"
         sudo x-terminal-emulator -e "$local_bin/.tmp_i_$i" &
     done
-    rm -rf '$file'
+    rm -rf '$file' #this part has to change to use only one variable
 
     while [ $index -lt ${#disks_list[@]} ];do
         index=0
