@@ -17,9 +17,15 @@ fi
 if [[ $EUID -ne 0 ]];
 then
 if [[ $IsInstalled -eq 1 ]]; then
-    exec sudo DFTool
+    clear
+    echo "Please, re-run the program with ROOT permission:
+    
+    sudo DFTool"
 else
-    exec sudo ./DFTool
+    clear
+    echo "Please, re-run the program with ROOT permission:
+    
+    sudo ./DFTool"
 fi
      
 fi
