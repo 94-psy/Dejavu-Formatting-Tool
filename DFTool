@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.705
+version=0.706
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -799,8 +799,7 @@ case "$W" in
         	    7) rm $binary_location/DFTool
         	       if (whiptail  --title "$REMT" --yesno "$PCShutdown" $r $c ); then
                        rm -rf $working_dir
-        	       fi
-        	       reopenDFTool ;;
+        	       fi ;;
         	    8) iteration=$(whiptail --inputbox "$ITTITLE" $r $c --title "$CFM" 3>&1 1>&2 2>&3) 
                         if [[ $iteration -le 1 ]]; then
                        		iteration=1
