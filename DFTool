@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.706
+version=0.707
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -20,13 +20,13 @@ if [[ $IsInstalled -eq 1 ]]; then
     clear
     echo "Please, re-run the program with ROOT permission:
     
-    sudo DFTool"
+sudo DFTool"
     exit 999
 else
     clear
     echo "Please, re-run the program with ROOT permission:
     
-    sudo ./DFTool"
+sudo ./DFTool"
     exit 999
 fi
      
