@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.707
+version=0.708
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -122,7 +122,7 @@ function create_config_file () #per il metodo di formattazione nuovo
     
     #set formatting method
     SETTINGS=$(whiptail --title "Configuration file" --radiolist \
-    "Choose default formatting method"  $r $c 4 \
+    "Choose default formatting method"  $r $c 10 \
     "D" "Badblocks and DD, 5 pattern (default)" ON \
     "G" "Gutmann method, 35 pattern" OFF \
     "USDoD" "US DoD 52220.22-M (ECE), 7 pattern" OFF \
@@ -473,7 +473,7 @@ function choose_f ()
 {
 updateconf=1
 def_formatting=$(whiptail --title "$CFM" --radiolist \
-"$CF"  $r $c 8 \
+"$CF"  $r $c 10 \
 "D" "$F1" ON \
 "G" "$F2" OFF \
 "USDoD" "$F3" OFF \
