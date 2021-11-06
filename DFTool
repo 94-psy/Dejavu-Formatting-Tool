@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.708
+version=0.709
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -284,7 +284,8 @@ if (whiptail  --title "$titleW" --yesno "$ASKF" $r $c ); then
     if [ -s "$local_log"/log_"$i" ] 
     then
     	#echo "$_file has some data."	#debug
-        smartctl -i /dev/"$i" >> "$local_log"/log_"$i" 
+	rm "$local_log"/log_"$i" 2>/dev/null #clean log to avoid long tail from badblocks that are, in this case, useless to detect correctly the faulted drive. Here is important only to detect the faulted drive rather than the error that faulted it, this program is not designed to repair just to format and/or install if the drive is in good state
+        smartctl -ax /dev/"$i" >> "$local_log"/log_"$i" 
     else
     	#echo "$_file is empty."	#debug
         rm "$local_log"/log_"$i" 2>/dev/null     
@@ -385,23 +386,32 @@ if [ -f "$local_file" ]; then
     for i in ${disks_list[@]};
     do
         rm -rf "$local_bin"/.tmp_i_"$i" 2>/dev/null
-        echo "$StartDSK/$i"
-        echo "echo '$StartDSK/$i'" >> "$local_bin"/.tmp_i_"$i"
+
       
-        if [[ "$debug_mode" = "OFF" ]]; then
-	    echo ""
-            #Installing with DD
-            echo "gunzip -c $working_dir/$file_name | dd of=/dev/$i status=progress" >> "$local_bin"/.tmp_i_"$i"
       
-        fi
+      
+      	if [ -s "$local_log"/log_"$i" ]; then
+	
+
+    	else
+	        echo "$StartDSK/$i"
+	        echo "echo '$StartDSK/$i'" >> "$local_bin"/.tmp_i_"$i"
+		if [[ "$debug_mode" = "OFF" ]]; then
+	    		echo ""
+            		#Installing with DD
+            		echo "gunzip -c $working_dir/$file_name | dd of=/dev/$i status=progress" >> "$local_bin"/.tmp_i_"$i"
+        	fi
+	        echo "echo '1' >> $working_dir/.i_counter" >> "$local_bin"/.tmp_i_"$i"
+		#for the expansion, the base commands are: sudo echo "- +" | sudo sfdisk -N 1 /dev/sda && sudo e2fsck -f /dev/sda1 && sudo resize2fs /dev/sda1
+		#they must be corected. these commands will expand the main partition till the end of the disk
+	        echo "rm $local_bin/.tmp_i_$i" >> "$local_bin"/.tmp_i_"$i"
+	        echo "exit 0" >> "$local_bin"/.tmp_i_"$i"
+	        chmod +x "$local_bin"/.tmp_i_"$i"
+	        sudo x-terminal-emulator -e "$local_bin/.tmp_i_$i" &  
+    	fi
+
         
-        echo "echo '1' >> $working_dir/.i_counter" >> "$local_bin"/.tmp_i_"$i"
-	#for the expansion, the base commands are: sudo echo "- +" | sudo sfdisk -N 1 /dev/sda && sudo e2fsck -f /dev/sda1 && sudo resize2fs /dev/sda1
-	#they must be corected. these commands will expand the main partition till the end of the disk
-        echo "rm $local_bin/.tmp_i_$i" >> "$local_bin"/.tmp_i_"$i"
-        echo "exit 0" >> "$local_bin"/.tmp_i_"$i"
-        chmod +x "$local_bin"/.tmp_i_"$i"
-        sudo x-terminal-emulator -e "$local_bin/.tmp_i_$i" &
+
     done
     rm -rf '$file' #this part has to change to use only one variable
 
