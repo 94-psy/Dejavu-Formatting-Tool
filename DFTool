@@ -344,6 +344,7 @@ formatta
 function check_img_update () 
 
 {
+#chiedere quali iso voler scaricare, prima di formattare/installare (quando viene richiamato). aprire un terminale separato con barra di avanzamento per dare lo stato aggiornato del download
 sudo rm -rf "$local_check_downloaded"	
 wget $server_check -O $local_check_downloaded -T 15 -t 2 2> /dev/null
 exitstatus="$?"
@@ -379,6 +380,10 @@ fi
 function installa ()
 
 {
+#prima di installare è importante chiedere quale iso installare (eventuale coordinamento con funzione precedente solo per eventuale download, ma forse non necessario)
+#dare la possibiltà di mettere un iso di default dalle impostazioni
+#creare script unico per entrambe le funzioni (formattazione + controllo fine download iso + installazione), modulare così da farne uno per tutti e da usare meno controlli esterni dvuti a processi multipli
+
 #if [ -f "$local_file" ]; then #in case of error (missing installation file) i can't install and i will print an error
 if [ -f "$local_file" ]; then
     get_disks
