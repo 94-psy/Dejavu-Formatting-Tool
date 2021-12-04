@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.709
+version=0.710
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -58,8 +58,8 @@ local_log="$working_dir/log"
 conf_file="$working_dir/configuration.conf"
 server="https://google.it"
 server_check="https://google.it"
-file_name="dejavu.img.gz"
-local_check_name="dejavu.img.gz.md5"
+file_name="dejavu_legacy.gz"
+local_check_name="dejavu_legacy.gz.md5"
 local_check_downloaded="$locale_check.new" #contains the  local position of the downloaded checksum file
 local_file="$working_dir/$file_name" #contains the  local position of the file
 locale_check="$working_dir/$local_check_name" #contains the  local position of the checksum file
