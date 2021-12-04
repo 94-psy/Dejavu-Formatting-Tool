@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.801
+version=0.802
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -56,8 +56,8 @@ working_dir="$home/.Dejavu"
 local_bin="$working_dir/bin"
 local_log="$working_dir/log"
 conf_file="$working_dir/configuration.conf"
-server="http://bevilacqua.synology.me/iso/"
-server_check="http://bevilacqua.synology.me/iso/"
+server="http://bevilacqua.synology.me/iso/dejavu_legacy.7z"
+server_check="http://bevilacqua.synology.me/iso/dejavu_legacy.iso.7z.md5"
 file_name="dejavu_legacy.7z"
 local_check_name="dejavu_legacy.7z.md5"
 local_check_downloaded="$locale_check.new" #contains the  local position of the downloaded checksum file
