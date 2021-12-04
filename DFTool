@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.710
+version=0.800
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -56,10 +56,10 @@ working_dir="$home/.Dejavu"
 local_bin="$working_dir/bin"
 local_log="$working_dir/log"
 conf_file="$working_dir/configuration.conf"
-server="https://google.it"
-server_check="https://google.it"
-file_name="dejavu_legacy.gz"
-local_check_name="dejavu_legacy.gz.md5"
+server="http://bevilacqua.synology.me/iso/"
+server_check="http://bevilacqua.synology.me/iso/"
+file_name="dejavu_legacy.7z"
+local_check_name="dejavu_legacy.7z.md5"
 local_check_downloaded="$locale_check.new" #contains the  local position of the downloaded checksum file
 local_file="$working_dir/$file_name" #contains the  local position of the file
 locale_check="$working_dir/$local_check_name" #contains the  local position of the checksum file
@@ -392,19 +392,16 @@ if [ -f "$local_file" ]; then
     do
         rm -rf "$local_bin"/.tmp_i_"$i" 2>/dev/null
 
-      
-      
-      
       	if [ -s "$local_log"/log_"$i" ]; then
 	
-
     	else
 	        echo "$StartDSK/$i"
 	        echo "echo '$StartDSK/$i'" >> "$local_bin"/.tmp_i_"$i"
 		if [[ "$debug_mode" = "OFF" ]]; then
 	    		echo ""
             		#Installing with DD
-            		echo "gunzip -c $working_dir/$file_name | dd of=/dev/$i status=progress" >> "$local_bin"/.tmp_i_"$i"
+            		echo "p7zip -d -c -k $working_dir/$file_name | dd of=/dev/$i status=progress" >> "$local_bin"/.tmp_i_"$i"
+			echo 'echo "- +" | sudo sfdisk -N 1 /dev/$i && sudo e2fsck -f /dev/$i1 && sudo resize2fs /dev/$i1' >> "$local_bin"/.tmp_i_"$i"
         	fi
 	        echo "echo '1' >> $working_dir/.i_counter" >> "$local_bin"/.tmp_i_"$i"
 		#for the expansion, the base commands are: sudo echo "- +" | sudo sfdisk -N 1 /dev/sda && sudo e2fsck -f /dev/sda1 && sudo resize2fs /dev/sda1
