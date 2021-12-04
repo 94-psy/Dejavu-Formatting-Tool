@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.800
+version=0.801
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -393,6 +393,7 @@ if [ -f "$local_file" ]; then
         rm -rf "$local_bin"/.tmp_i_"$i" 2>/dev/null
 
       	if [ -s "$local_log"/log_"$i" ]; then
+		echo ""
 	
     	else
 	        echo "$StartDSK/$i"
