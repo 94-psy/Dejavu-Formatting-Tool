@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.802
+version=0.803
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -71,7 +71,7 @@ URL2="https://progettodejavu.blogspot.com/"
 URL3="https://www.facebook.com/crederepervedereonlus/"
 URL4="https://www.facebook.com/progettodejavu/"
 URL5="https://github.com/94-psy/Dejavu-Formatting-Tool"
-minimum_space=80
+minimum_space=60
 
 if [ -f "$working_dir" ]; then
     echo "Working directory is OK"
@@ -369,6 +369,7 @@ if [[ "$exitstatus" -eq 0 ]] ; then
     sudo rm -rf $local_check_downloaded 2>/dev/null
 else
         whiptail --title "$ERRORT" --msgbox "$WGETERROR" $r $c
+	#future update: allow the installation with a possible corrupted iso (display a warning)
 fi
 
 }
