@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.803
+version=0.805
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -403,8 +403,8 @@ if [ -f "$local_file" ]; then
 	    		echo ""
             		#Installing with DD
             		echo "p7zip -d -c -k $working_dir/$file_name | dd of=/dev/$i status=progress" >> "$local_bin"/.tmp_i_"$i"
-			echo 'echo "- +" \ ' >> "$local_bin"/.tmp_i_"$i"
-			echo " | sudo sfdisk -N 1 /dev/$i && sudo e2fsck -f /dev/$i1 && sudo resize2fs /dev/$i1" >> "$local_bin"/.tmp_i_"$i"
+			echo -n 'echo "- +" | ' >> "$local_bin"/.tmp_i_"$i"
+			echo "sudo sfdisk -N 1 /dev/$i && sudo e2fsck -f /dev/${i}1 && sudo resize2fs /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
         	fi
 	        echo "echo '1' >> $working_dir/.i_counter" >> "$local_bin"/.tmp_i_"$i"
 		#for the expansion, the base commands are: sudo echo "- +" | sudo sfdisk -N 1 /dev/sda && sudo e2fsck -f /dev/sda1 && sudo resize2fs /dev/sda1
