@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.918
+version=0.919
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -462,8 +462,8 @@ if [ -f "$local_file" ]; then
     for i in ${disks_list[@]};
     do
         echo "Extra check for ${i}1"
-        sudo resize2fs -p /dev/${i}1
 	sudo e2fsck -f -y -v -C 0 /dev/${i}1
+        sudo resize2fs -p /dev/${i}1
 	echo ""
     done
 
