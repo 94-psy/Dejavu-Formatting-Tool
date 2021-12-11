@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.808
+version=0.915
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -57,7 +57,7 @@ local_bin="$working_dir/bin"
 local_log="$working_dir/log"
 conf_file="$working_dir/configuration.conf"
 server="http://bevilacqua.synology.me/iso/dejavu_legacy.7z"
-server_check="http://bevilacqua.synology.me/iso/dejavu_legacy.iso.7z.md5"
+server_check="http://bevilacqua.synology.me/iso/dejavu_legacy.7z.md5"
 file_name="dejavu_legacy.7z"
 local_check_name="dejavu_legacy.7z.md5"
 local_check_downloaded="$locale_check.new" #contains the  local position of the downloaded checksum file
@@ -71,7 +71,7 @@ URL2="https://progettodejavu.blogspot.com/"
 URL3="https://www.facebook.com/crederepervedereonlus/"
 URL4="https://www.facebook.com/progettodejavu/"
 URL5="https://github.com/94-psy/Dejavu-Formatting-Tool"
-minimum_space=60
+minimum_space=32
 
 if [ -f "$working_dir" ]; then
     echo "Working directory is OK"
@@ -81,6 +81,20 @@ fi
 
 
 ########################FUNCTIONS########################
+
+function spinner() {
+	local pid=$1
+	local delay=0.50
+	local spinstr='/-\|'
+	while [ "$(ps a | awk '{print $1}' | grep "${pid}")" ]; do
+		local temp=${spinstr#?}
+		printf " [%c]  " "${spinstr}"
+		local spinstr=${temp}${spinstr%"$temp"}
+		sleep ${delay}
+		printf "\b\b\b\b\b\b"
+	done
+	printf "    \b\b\b\b"
+}
 
 function dipendenze ()
 
@@ -346,7 +360,8 @@ function check_img_update ()
 {
 #chiedere quali iso voler scaricare, prima di formattare/installare (quando viene richiamato). aprire un terminale separato con barra di avanzamento per dare lo stato aggiornato del download
 sudo rm -rf "$local_check_downloaded"	
-wget $server_check -O $local_check_downloaded -T 15 -t 2 2> /dev/null
+echo "Getting files for MD5 check"
+wget $server_check -O $local_check_downloaded -T 15 -t 2 2> /dev/null & spinner $!
 exitstatus="$?"
 
 if [[ "$exitstatus" -eq 0 ]] ; then
@@ -363,7 +378,7 @@ if [[ "$exitstatus" -eq 0 ]] ; then
         echo "Updating.."
         sudo mv "$local_check_downloaded" "$locale_check"
         sudo rm -rf $local_file 2>/dev/null
-        wget $server -O $local_file  2> /dev/null
+        wget $server -O $local_file  2> /dev/null & spinner $!
     
     fi
     sudo rm -rf $local_check_downloaded 2>/dev/null
@@ -403,21 +418,11 @@ if [ -f "$local_file" ]; then
 	    		echo ""
             		#Installing with DD
             		echo "p7zip -d -c -k $working_dir/$file_name | dd of=/dev/$i status=progress" >> "$local_bin"/.tmp_i_"$i"
-			echo "sudo e2fsck -f -y -v -C 0 /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
-			echo -n 'echo "- +" | ' >> "$local_bin"/.tmp_i_"$i"
+			echo -n 'echo ", +" | ' >> "$local_bin"/.tmp_i_"$i"
 			echo "sudo sfdisk -N 1 /dev/$i" >> "$local_bin"/.tmp_i_"$i"
+			echo "sudo e2fsck -f -y /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
 			echo "sudo resize2fs -p /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
 			echo "sudo e2fsck -f -y -v -C 0 /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
-			#echo -n 'echo "- +" | ' >> "$local_bin"/.tmp_i_"$i"
-			#echo "sudo sfdisk -N 1 /dev/$i && sudo resize2fs -p /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
-			#echo "sudo e2fsck -f -y -v -C 0 /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
-			#echo "sudo e2fsck -f -y -v -C 0 /dev/${i}1 && sudo resize2fs -p /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
-			#echo "sudo e2fsck -f -y -v -C 0 /dev/${i}1" >> "$local_bin"/.tmp_i_"$i"
-			#echo "sudo resize2fs -p /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
-			#echo -n 'echo "- +" | ' >> "$local_bin"/.tmp_i_"$i"
-			#echo "sudo sfdisk -N 1 /dev/$i && sudo e2fsck -f /dev/${i}1 && sudo resize2fs /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
-			#echo "sudo e2fsck -f -y -v -C 0 /dev/${i}1" >> "$local_bin"/.tmp_i_"$i"
-			#echo "sudo resize2fs -p /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
         	fi
 	        echo "echo '1' >> $working_dir/.i_counter" >> "$local_bin"/.tmp_i_"$i"
 		#for the expansion, the base commands are: sudo echo "- +" | sudo sfdisk -N 1 /dev/sda && sudo e2fsck -f /dev/sda1 && sudo resize2fs /dev/sda1
@@ -444,7 +449,7 @@ if [ -f "$local_file" ]; then
         echo $(( $index * 100 / $total_disks )) | dialog --title "$titolo" --gauge "$InstallingProgress" $r $c 0
 
         if [[ $index -ge $total_disks ]]; then
-            sleep 60
+            sleep 1
         else
             sleep $waiting_time
         fi
