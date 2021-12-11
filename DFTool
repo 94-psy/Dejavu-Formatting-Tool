@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.915
+version=0.916
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -366,7 +366,7 @@ exitstatus="$?"
 
 if [[ "$exitstatus" -eq 0 ]] ; then
     #computing MD5 checksum
-    md5sum "$local_file" | awk '{ print $1}' > "$locale_check"
+    md5sum "$local_file" | awk '{ print $1}' > "$locale_check" & spinner $!
     
     md5_server=$(sudo head -n 1 "$local_check_downloaded") #md5sum just downloaded
     md5_local=$(sudo head -n 1 "$locale_check") #md5sum already on local drive
