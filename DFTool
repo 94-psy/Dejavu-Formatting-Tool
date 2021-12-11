@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.916
+version=0.918
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -242,6 +242,7 @@ function get_disks ()
     for i in ${disks_list[@]}; do
         (( total_disks += 1))
     done
+    rm -rf '$file' 
     echo "$DSKFOUND $total_disks"
 }
 
@@ -269,7 +270,7 @@ if (whiptail  --title "$titleW" --yesno "$ASKF" $r $c ); then
         chmod +x "$local_bin"/.tmp_"$i"
         sudo x-terminal-emulator -e "$local_bin/.tmp_$i" & 
     done
-    rm -rf '$file'
+    
     
     while [ $index -lt ${#disks_list[@]} ];do
         index=0
@@ -437,7 +438,6 @@ if [ -f "$local_file" ]; then
         
 
     done
-    rm -rf '$file' #this part has to change to use only one variable
 
     while [ $index -lt ${#disks_list[@]} ];do
         index=0
@@ -456,9 +456,18 @@ if [ -f "$local_file" ]; then
         fi
 	 
     done
-    clear
-
     rm -rf "$working_dir"/.i_counter 2>/dev/null 
+    clear
+    
+    for i in ${disks_list[@]};
+    do
+        echo "Extra check for ${i}1"
+        sudo resize2fs -p /dev/${i}1
+	sudo e2fsck -f -y -v -C 0 /dev/${i}1
+	echo ""
+    done
+
+    
 
 else
 
