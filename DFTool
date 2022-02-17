@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.920
+version=0.921
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -420,12 +420,12 @@ if [ -f "$local_file" ]; then
 	    		echo ""
             		#Installing with DD
             		echo "p7zip -d -c -k $working_dir/$file_name | dd of=/dev/$i status=progress" >> "$local_bin"/.tmp_i_"$i"
-			echo -n 'echo ", +" | ' >> "$local_bin"/.tmp_i_"$i"
-			echo "sudo sfdisk -N 1 /dev/$i" >> "$local_bin"/.tmp_i_"$i"
+			#echo -n 'echo ", +" | ' >> "$local_bin"/.tmp_i_"$i"
+			#echo "sudo sfdisk -N 1 /dev/$i" >> "$local_bin"/.tmp_i_"$i"
 			echo "sudo umount /dev/{$i}1" >> "$local_bin"/.tmp_i_"$i"
-			echo "sudo e2fsck -f -y /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
-			echo "sudo resize2fs -p /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
-			echo "sudo e2fsck -f -y -v -C 0 /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
+			#echo "sudo e2fsck -f -y /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
+			#echo "sudo resize2fs -p /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
+			#echo "sudo e2fsck -f -y -v -C 0 /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
         	fi
 	        echo "echo '1' >> $working_dir/.i_counter" >> "$local_bin"/.tmp_i_"$i"
 		#for the expansion, the base commands are: sudo echo "- +" | sudo sfdisk -N 1 /dev/sda && sudo e2fsck -f /dev/sda1 && sudo resize2fs /dev/sda1
@@ -464,7 +464,20 @@ if [ -f "$local_file" ]; then
     do
         echo "Extra check for ${i}1"
 	sudo e2fsck -f -y -v -C 0 /dev/${i}1
+	echo "Wait 5 seconds"
+	jj=0
+	for jj in 5
+		sleep 1
+		echo -c "$jj \c"
+	done
         sudo resize2fs -p /dev/${i}1
+	echo "Wait 10 seconds"
+	jj=0
+	for jj in 10
+		sleep 1
+		echo -c "$jj \c"
+	done
+	echo "Partition /dev/${i}1 completed"
 	echo ""
     done
 
