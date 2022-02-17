@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.921
+version=0.922
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -465,15 +465,13 @@ if [ -f "$local_file" ]; then
         echo "Extra check for ${i}1"
 	sudo e2fsck -f -y -v -C 0 /dev/${i}1
 	echo "Wait 5 seconds"
-	jj=0
-	for jj in 5
+	for jj in {1..5};
 		sleep 1
 		echo -c "$jj \c"
 	done
         sudo resize2fs -p /dev/${i}1
 	echo "Wait 10 seconds"
-	jj=0
-	for jj in 10
+	for jj in {1..10};
 		sleep 1
 		echo -c "$jj \c"
 	done
