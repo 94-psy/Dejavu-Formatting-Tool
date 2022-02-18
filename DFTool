@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.923
+version=0.924
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -462,20 +462,34 @@ if [ -f "$local_file" ]; then
     
     for i in ${disks_list[@]};
     do
-        echo "Extra check for ${i}1"
-	sudo e2fsck -f -y -v -C 0 /dev/${i}1
+        echo "Expansion and Check for ${i}1"
+	
+	echo ", +" | sudo sfdisk -N 1 /dev/$i #expansion part 1
+	
 	echo "Wait 5 seconds"
+	echo ""
 	for jj in {1..5};
 	do
 		sleep 1
-		echo -c "$jj \c"
+		echo -n "."
 	done
-        sudo resize2fs -p /dev/${i}1
-	echo "Wait 10 seconds"
-	for jj in {1..10};
+	
+	sudo e2fsck -f -y -v -C 0 /dev/${i}1
+	echo "Wait 5 seconds"
+	echo ""
+	for jj in {1..5};
 	do
 		sleep 1
-		echo -c "$jj \c"
+		echo -n "."
+	done
+        sudo resize2fs -p /dev/${i}1 #expansion part 2
+	echo "Wait 5 seconds"
+	echo ""
+	
+	for jj in {1..5};
+	do
+		sleep 1
+		echo -n "."
 	done
 	echo "Partition /dev/${i}1 completed"
 	echo ""
