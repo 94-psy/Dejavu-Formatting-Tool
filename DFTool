@@ -539,11 +539,9 @@ function reopenDFTool ()
 sleep 5
 clear
 if [[ $IsInstalled -eq 1 ]] ; then
-   #sudo -u $user sudo DFTool
-   sudo DFTool
+   sudo -u $user sudo DFTool
 else
-   #sudo -u $user sudo ./DFTool
-   sudo ./DFTool
+   sudo -u $user sudo ./DFTool
 fi
 }
 
@@ -819,7 +817,7 @@ clear
 
 if [ "$(ls -A $local_log)" ]; then #if true is not empty --> some logs in
     if (whiptail  --title "$TLOG" --yesno "$ERRLOG" $r $c ); then
-        sudo -u $user xdg-open $local_log >/dev/null 2>& &
+        sudo -u $user xdg-open $local_log 2>/dev/null &
         exit 3
     else
         rm -rf $local_log
@@ -877,7 +875,7 @@ case "$W" in
         	       update_config
         	       reopenDFTool ;;
         	    5) reopenDFTool ;;
-        	    6) wget $update_server -O /tmp/DFTool_tmp -T 30 -t 1 >/dev/null 2>&
+        	    6) wget $update_server -O /tmp/DFTool_tmp -T 30 -t 1 2>/dev/null
         	       sudo mv -f /tmp/DFTool_tmp "$binary_location"/DFTool
 		       sudo chmod 775 "$binary_location"/DFTool
         	       reopenDFTool ;;
