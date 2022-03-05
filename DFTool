@@ -178,7 +178,7 @@ function update_DFTool ()
 {
 #download from github the latest and move to $binary_location
 
-wget $update_server -O /tmp/DFTool_tmp -T 30 -t 1 2>/dev/null
+wget $update_server -O /tmp/DFTool_tmp -T 30 -t 1 >/dev/null 2>&1
 nversion=$( sed -n '2p' /tmp/DFTool_tmp | tr -d version= )
 if [ "$version" = "$nvefrsion" ] ; then #update only when the version is different --> i want to have alway the latest available version (also one modified manually with a higher version will be replaced)
     echo "Already Update"
@@ -257,8 +257,8 @@ if (whiptail  --title "$titleW" --yesno "$ASKF" $r $c ); then
     touch "$working_dir"/.counter
     for i in ${disks_list[@]};
     do
-        rm "$local_log"/log_"$i" 2>/dev/null
-        rm -rf "$local_bin"/.tmp_"$i" 2>/dev/null
+        rm "$local_log"/log_"$i" >/dev/null 2>&1
+        rm -rf "$local_bin"/.tmp_"$i" >/dev/null 2>&1
         echo "$StartDSK/$i"
         echo "echo '$StartDSK/$i'" >> "$local_bin"/.tmp_"$i"
             if [[ "$debug_mode" = "OFF" ]]; then
@@ -300,17 +300,17 @@ if (whiptail  --title "$titleW" --yesno "$ASKF" $r $c ); then
     if [ -s "$local_log"/log_"$i" ] 
     then
     	#echo "$_file has some data."	#debug
-	rm "$local_log"/log_"$i" 2>/dev/null #clean log to avoid long tail from badblocks that are, in this case, useless to detect correctly the faulted drive. Here is important only to detect the faulted drive rather than the error that faulted it, this program is not designed to repair just to format and/or install if the drive is in good state
+	rm "$local_log"/log_"$i" >/dev/null 2>&1 #clean log to avoid long tail from badblocks that are, in this case, useless to detect correctly the faulted drive. Here is important only to detect the faulted drive rather than the error that faulted it, this program is not designed to repair just to format and/or install if the drive is in good state
         smartctl -ax /dev/"$i" >> "$local_log"/log_"$i" 
     else
     	#echo "$_file is empty."	#debug
-        rm "$local_log"/log_"$i" 2>/dev/null     
+        rm "$local_log"/log_"$i" >/dev/null 2>&1     
     fi
     
     done
     
     
-    rm -rf "$working_dir/".counter 2>/dev/null
+    rm -rf "$working_dir/".counter >/dev/null 2>&1
     
 else
     whiptail --title "$ERRORT" --msgbox "$ABORTEDF" $r $c
@@ -412,7 +412,7 @@ if [ -f "$local_file" ]; then
     touch "$working_dir"/.i_counter
     for i in ${disks_list[@]};
     do
-        rm -rf "$local_bin"/.tmp_i_"$i" 2>/dev/null
+        rm -rf "$local_bin"/.tmp_i_"$i" >/dev/null 2>&1
 
       	if [ -s "$local_log"/log_"$i" ]; then
 		echo ""
@@ -461,7 +461,7 @@ if [ -f "$local_file" ]; then
         fi
 	 
     done
-    rm -rf "$working_dir"/.i_counter 2>/dev/null 
+    rm -rf "$working_dir"/.i_counter >/dev/null 2>&1
     clear
     
     for i in ${disks_list[@]};
@@ -470,27 +470,27 @@ if [ -f "$local_file" ]; then
 	
 	echo ", +" | sudo sfdisk -N 1 /dev/$i #expansion part 1
 	
-	echo "Wait 5 seconds"
+	echo "Wait 10 seconds"
 	echo ""
-	for jj in {1..5};
+	for jj in {1..10};
 	do
 		sleep 1
 		echo -n "."
 	done
 	
 	sudo e2fsck -f -y -v -C 0 /dev/${i}1
-	echo "Wait 5 seconds"
+	echo "Wait 10 seconds"
 	echo ""
-	for jj in {1..5};
+	for jj in {1..10};
 	do
 		sleep 1
 		echo -n "."
 	done
         sudo resize2fs -p /dev/${i}1 #expansion part 2
-	echo "Wait 5 seconds"
+	echo "Wait 10 seconds"
 	echo ""
 	
-	for jj in {1..5};
+	for jj in {1..10};
 	do
 		sleep 1
 		echo -n "."
@@ -537,9 +537,11 @@ function reopenDFTool ()
 sleep 5
 clear
 if [[ $IsInstalled -eq 1 ]] ; then
-   sudo -u $user sudo DFTool
+   #sudo -u $user sudo DFTool
+   sudo DFTool
 else
-   sudo -u $user sudo ./DFTool
+   #sudo -u $user sudo ./DFTool
+   sudo ./DFTool
 fi
 }
 
@@ -815,7 +817,7 @@ clear
 
 if [ "$(ls -A $local_log)" ]; then #if true is not empty --> some logs in
     if (whiptail  --title "$TLOG" --yesno "$ERRLOG" $r $c ); then
-        sudo -u $user xdg-open $local_log &
+        sudo -u $user xdg-open $local_log >/dev/null 2>& &
         exit 3
     else
         rm -rf $local_log
@@ -837,7 +839,7 @@ case "$W" in
 	1)	spegnimento
 	    	whiptail --title "$INFOINST" --msgbox "$ALLERTINST" $r $c
 		get_disks 
-		( check_img_update 2>/dev/null ) &
+		check_img_update 
 		clear
 		formatting
 		installa 
@@ -873,7 +875,7 @@ case "$W" in
         	       update_config
         	       reopenDFTool ;;
         	    5) reopenDFTool ;;
-        	    6) wget $update_server -O /tmp/DFTool_tmp -T 30 -t 1 2>/dev/null
+        	    6) wget $update_server -O /tmp/DFTool_tmp -T 30 -t 1 >/dev/null 2>&
         	       sudo mv -f /tmp/DFTool_tmp "$binary_location"/DFTool
 		       sudo chmod 775 "$binary_location"/DFTool
         	       reopenDFTool ;;
@@ -898,15 +900,15 @@ case "$W" in
         	"5" "$INFO5" \
         	"6" "$INFO6" 3>&1 1>&2 2>&3)
         	case "$Y" in 
-        	    1) sudo -u $user sensible-browser $URL1 2> /dev/null &
+        	    1) sudo -u $user xdg-open $URL1 >/dev/null 2>& &
         	       reopenDFTool ;;
-        	    2) sudo -u $user sensible-browser $URL2 2> /dev/null &
+        	    2) sudo -u $user xdg-open $URL2 >/dev/null 2>& &
         	       reopenDFTool ;;
-        	    3) sudo -u $user sensible-browser $URL3 2> /dev/null &
+        	    3) sudo -u $user xdg-open $URL3 >/dev/null 2>& &
         	       reopenDFTool ;;
-        	    4) sudo -u $user sensible-browser $URL4 2> /dev/null &
+        	    4) sudo -u $user xdg-open $URL4 >/dev/null 2>& &
         	       reopenDFTool ;;
-        	    5) sudo -u $user sensible-browser $URL5 2> /dev/null &
+        	    5) sudo -u $user xdg-open $URL5 >/dev/null 2>& &
         	       reopenDFTool ;;
         	    6) Y=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 10 \
                	   "1" "$HELP1" \
@@ -916,15 +918,15 @@ case "$W" in
                	   "5" "$HELP5" \
                	   "6" "$HELP6" 3>&1 1>&2 2>&3)
                	   case "$Y" in 
-               	    1) sudo -u $user sensible-browser $HURL1 2> /dev/null &
+               	    1) sudo -u $user xdg-open $HURL1 >/dev/null 2>& &
                	       reopenDFTool ;;
                	    2) whiptail --title "$HELPT2" --msgbox "$HELPD2" $r $c 
                	       reopenDFTool ;;
-               	    3) sudo -u $user sensible-browser $HURL3 2> /dev/null &
+               	    3) sudo -u $user xdg-open $HURL3 >/dev/null 2>& &
                	       reopenDFTool ;;
-               	    4) sudo -u $user sensible-browser $HURL4 2> /dev/null &
+               	    4) sudo -u $user xdg-open $HURL4 >/dev/null 2>& &
                	       reopenDFTool ;;
-               	    5) sudo -u $user sensible-browser $HURL5 2> /dev/null &
+               	    5) sudo -u $user xdg-open $HURL5 >/dev/null 2>& &
                	       reopenDFTool ;;
                	    6) 
                	       reopenDFTool ;;
