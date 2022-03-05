@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.925
+version=0.926
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -182,9 +182,11 @@ wget $update_server -O /tmp/DFTool_tmp -T 30 -t 1 >/dev/null 2>&1
 nversion=$( sed -n '2p' /tmp/DFTool_tmp | tr -d version= )
 if [ "$version" = "$nvefrsion" ] ; then #update only when the version is different --> i want to have alway the latest available version (also one modified manually with a higher version will be replaced)
     echo "Already Update"
+    sleep 2
     whiptail --title "$UPDFT" --msgbox "$UPDOK" $r $c
 else
     echo "Updating.."
+    sleep 2
     chmod +x /tmp/DFTool_tmp
     sudo mv -f /tmp/DFTool_tmp "$binary_location"/DFTool
     whiptail --title "$UPDFT" --msgbox "$UPNO" $r $c
