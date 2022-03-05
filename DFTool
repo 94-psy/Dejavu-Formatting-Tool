@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.926
+version=0.9261
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -900,15 +900,15 @@ case "$W" in
         	"5" "$INFO5" \
         	"6" "$INFO6" 3>&1 1>&2 2>&3)
         	case "$Y" in 
-        	    1) sudo -u $user xdg-open $URL1 >/dev/null 2>& &
+        	    1) sudo -u $user xdg-open $URL1 >/dev/null &
         	       reopenDFTool ;;
-        	    2) sudo -u $user xdg-open $URL2 >/dev/null 2>& &
+        	    2) sudo -u $user xdg-open $URL2 >/dev/null &
         	       reopenDFTool ;;
-        	    3) sudo -u $user xdg-open $URL3 >/dev/null 2>& &
+        	    3) sudo -u $user xdg-open $URL3 >/dev/null &
         	       reopenDFTool ;;
-        	    4) sudo -u $user xdg-open $URL4 >/dev/null 2>& &
+        	    4) sudo -u $user xdg-open $URL4 >/dev/null &
         	       reopenDFTool ;;
-        	    5) sudo -u $user xdg-open $URL5 >/dev/null 2>& &
+        	    5) sudo -u $user xdg-open $URL5 >/dev/null &
         	       reopenDFTool ;;
         	    6) Y=$(whiptail --title "Menu' $titolo $version" --menu "$MainMenu" $r $c 10 \
                	   "1" "$HELP1" \
@@ -918,15 +918,15 @@ case "$W" in
                	   "5" "$HELP5" \
                	   "6" "$HELP6" 3>&1 1>&2 2>&3)
                	   case "$Y" in 
-               	    1) sudo -u $user xdg-open $HURL1 >/dev/null 2>& &
+               	    1) sudo -u $user xdg-open $HURL1 >/dev/null &
                	       reopenDFTool ;;
                	    2) whiptail --title "$HELPT2" --msgbox "$HELPD2" $r $c 
                	       reopenDFTool ;;
-               	    3) sudo -u $user xdg-open $HURL3 >/dev/null 2>& &
+               	    3) sudo -u $user xdg-open $HURL3 >/dev/null &
                	       reopenDFTool ;;
-               	    4) sudo -u $user xdg-open $HURL4 >/dev/null 2>& &
+               	    4) sudo -u $user xdg-open $HURL4 >/dev/null &
                	       reopenDFTool ;;
-               	    5) sudo -u $user xdg-open $HURL5 >/dev/null 2>& &
+               	    5) sudo -u $user xdg-open $HURL5 >/dev/null &
                	       reopenDFTool ;;
                	    6) 
                	       reopenDFTool ;;
