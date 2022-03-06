@@ -468,6 +468,7 @@ if [ -f "$local_file" ]; then
     
     for i in ${disks_list[@]};
     do
+    	sudo umount /dev/"{$i}"1
         echo "Expansion and Check for ${i}1"
 	
 	echo ", +" | sudo sfdisk -N 1 /dev/$i #expansion part 1
