@@ -1,5 +1,5 @@
 #!/bin/bash
-version=0.9262
+version=0.9263
 
 if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
@@ -428,6 +428,7 @@ if [ -f "$local_file" ]; then
             		echo "p7zip -d -c -k $working_dir/$file_name | dd of=/dev/$i status=progress" >> "$local_bin"/.tmp_i_"$i"
 			#echo -n 'echo ", +" | ' >> "$local_bin"/.tmp_i_"$i"
 			#echo "sudo sfdisk -N 1 /dev/$i" >> "$local_bin"/.tmp_i_"$i"
+			echo "sleep 10" >> "$local_bin"/.tmp_i_"$i"
 			echo "sudo umount /dev/{$i}1" >> "$local_bin"/.tmp_i_"$i"
 			#echo "sudo e2fsck -f -y /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
 			#echo "sudo resize2fs -p /dev/${i}1 " >> "$local_bin"/.tmp_i_"$i"
